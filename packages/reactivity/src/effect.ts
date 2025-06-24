@@ -1,6 +1,15 @@
+import { Link, startTracking } from "./system";
+
 export let activeSub: any = null
 
 class ReactiveEffect {
+
+  // 依赖项链表头节点
+  deps: Link | undefined
+
+  // 依赖项链表尾节点
+  depsTail: Link | undefined
+
   constructor(public fn: Function) { }
 
   run() {
@@ -8,6 +17,7 @@ class ReactiveEffect {
     const prevSub = activeSub
 
     activeSub = this
+    startTracking(this)
     try {
       return this.fn()
     } finally {

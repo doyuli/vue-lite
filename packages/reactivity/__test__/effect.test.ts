@@ -37,4 +37,21 @@ describe('reactivity/effect', () => {
         expect(innerFn).toBeCalledTimes(3)
         expect(fn).toBeCalledTimes(2)
     })
+
+    it('should collect dependencies correctly', () => {
+        const falg = ref(true)
+        const count = ref(0)
+        const fn = vi.fn(() => {
+            falg.value
+            count.value
+        })
+        effect(fn)
+        expect(fn).toBeCalledTimes(1)
+        count.value++
+        expect(fn).toBeCalledTimes(2)
+        count.value++
+        expect(fn).toBeCalledTimes(3)
+        count.value++
+        expect(fn).toBeCalledTimes(4)
+    })
 })
