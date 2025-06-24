@@ -1,7 +1,7 @@
 export let activeSub: any = null
 
 class ReactiveEffect {
-  constructor(public fn: Function) {}
+  constructor(public fn: Function) { }
 
   run() {
     // 保存上一次执行的 effect，处理嵌套逻辑
@@ -30,10 +30,10 @@ class ReactiveEffect {
   }
 }
 
-export function effect(fn: any, options: any) {
+export function effect(fn: any, options?: any) {
 
   const e = new ReactiveEffect(fn)
-  
+
   /**
    * 合并 options 
    * 比如：scheduler
