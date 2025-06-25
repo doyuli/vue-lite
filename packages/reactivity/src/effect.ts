@@ -1,6 +1,4 @@
-import { Link, startTracking, endTracking } from "./system";
-
-export let activeSub: any = null
+import { Link, Subscriber, startTracking, endTracking } from "./system";
 
 class ReactiveEffect {
 
@@ -16,12 +14,12 @@ class ReactiveEffect {
     // 保存上一次执行的 effect，处理嵌套逻辑
     const prevSub = activeSub
 
-    activeSub = this
+    setActiveSub(this)
     startTracking(this)
     try {
       return this.fn()
     } finally {
-      activeSub = prevSub
+      setActiveSub(prevSub)
       endTracking(this)
     }
   }
@@ -60,4 +58,10 @@ export function effect(fn: any, options?: any) {
   runner.effect = e // 将 effect 实例挂载到 runner 上，方便后续使用
 
   return runner
+}
+
+export let activeSub: Subscriber | undefined = undefined
+
+export function setActiveSub(sub: Subscriber | undefined) {
+  activeSub = sub
 }
