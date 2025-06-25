@@ -91,4 +91,17 @@ describe('reactivity/effect', () => {
         count.value++
         expect(fn).toBeCalledTimes(2)
     })
+
+    it('should handle recursive loops', () => {
+        const count = ref(0)
+        const fn = vi.fn(() => {
+            count.value++
+        })
+        effect(fn)
+        expect(fn).toBeCalledTimes(1)
+        count.value++
+        expect(fn).toBeCalledTimes(2)
+        count.value++
+        expect(fn).toBeCalledTimes(3)
+    })
 })

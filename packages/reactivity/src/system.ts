@@ -6,6 +6,7 @@ export interface Dependency {
 export interface Subscriber {
   deps: Link | undefined
   depsTail: Link | undefined
+  tracking: boolean
 }
 
 export interface Link {
@@ -38,13 +39,15 @@ export function link(dep: Dependency, sub: Subscriber) {
  * 派发更新
  */
 export function propagate(subs: Link) {
-  let currentSub = subs
+  let link = subs
   let queueEffects = []
 
   // 遍历链表，执行订阅者
-  while (currentSub) {
-    queueEffects.push(currentSub.sub)
-    currentSub = currentSub.nextSub
+  while (link) {
+    if (!link.sub.tracking) {
+      queueEffects.push(link.sub)
+    }
+    link = link.nextSub
   }
 
   queueEffects.forEach((effect) => effect.notify())
@@ -54,6 +57,7 @@ export function propagate(subs: Link) {
  * 开始依赖追踪
  */
 export function startTracking(sub: Subscriber) {
+  sub.tracking = true
   sub.depsTail = undefined
 }
 
@@ -76,6 +80,8 @@ export function endTracking(sub: Subscriber) {
     clearTracking(sub.deps)
     sub.deps = undefined
   }
+
+  sub.tracking = false
 }
 
 /**

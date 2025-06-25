@@ -8,6 +8,9 @@ class ReactiveEffect {
   // 依赖项链表尾节点
   depsTail: Link | undefined
 
+  // 正在追踪依赖
+  tracking = false
+
   constructor(public fn: Function) { }
 
   run() {
