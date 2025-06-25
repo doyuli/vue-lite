@@ -54,4 +54,41 @@ describe('reactivity/effect', () => {
         count.value++
         expect(fn).toBeCalledTimes(4)
     })
+
+    it('should discover new branches while running automatically', () => {
+        const falg = ref(true)
+        const flagTrue = ref(0)
+        const flagFalse = ref(0)
+        const fn = vi.fn(() => {
+            if (falg.value) {
+                flagTrue.value
+            } else {
+                flagFalse.value
+            }
+        })
+        effect(fn)
+        expect(fn).toBeCalledTimes(1)
+        falg.value = false
+        expect(fn).toBeCalledTimes(2)
+        flagTrue.value++
+        expect(fn).toBeCalledTimes(2)
+        flagFalse.value++
+        expect(fn).toBeCalledTimes(3)
+    })
+
+    it('should automatically clean up when no dependencies are found', () => {
+        const count = ref(0)
+        let flag = false
+        const fn = vi.fn(() => {
+            if (flag) return
+            flag = true
+            count.value
+        })
+        effect(fn)
+        expect(fn).toBeCalledTimes(1)
+        count.value++
+        expect(fn).toBeCalledTimes(2)
+        count.value++
+        expect(fn).toBeCalledTimes(2)
+    })
 })

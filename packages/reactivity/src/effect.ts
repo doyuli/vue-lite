@@ -1,4 +1,4 @@
-import { Link, startTracking } from "./system";
+import { Link, startTracking, endTracking } from "./system";
 
 export let activeSub: any = null
 
@@ -22,6 +22,7 @@ class ReactiveEffect {
       return this.fn()
     } finally {
       activeSub = prevSub
+      endTracking(this)
     }
   }
 
