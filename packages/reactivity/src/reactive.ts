@@ -1,6 +1,7 @@
 import { isObject } from "@vue/shared";
-import { mutableHandler } from "./baseHandlers";
+import { mutableHandlers } from "./baseHandlers";
 
+export const targetMap = new WeakMap()
 export const reactiveMap = new WeakMap()
 const reactiveSet = new WeakSet()
 
@@ -25,7 +26,7 @@ function createReactiveObject<T extends object>(target: T): T {
         return existingProxy
     }
 
-    const porxy = new Proxy(target, mutableHandler)
+    const porxy = new Proxy(target, mutableHandlers)
 
     // 保存 target 和 proxy 关联关系
     reactiveMap.set(target, porxy)
@@ -34,8 +35,6 @@ function createReactiveObject<T extends object>(target: T): T {
 
     return porxy
 }
-
-export const targetMap = new WeakMap()
 
 export function isReactive(target: any) {
     return reactiveSet.has(target)

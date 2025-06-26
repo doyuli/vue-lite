@@ -1,19 +1,48 @@
-import { hasChanged } from "@vue/shared";
+import { hasChanged, isObject } from "@vue/shared";
 import { track, trigger } from "./dep";
+import { reactive } from "./reactive";
+import { isRef } from "./ref";
 
-export const mutableHandler: ProxyHandler<any> = {
+export const mutableHandlers: ProxyHandler<any> = {
     get(target, key, receiver) {
         track(target, key)
         // receiver 保证访问器里的 this 指向代理对象
         // proxy === receiver
-        return Reflect.get(target, key, receiver)
+        const result = Reflect.get(target, key, receiver)
+
+        // 如果是一个 ref，给他解包
+        if (isRef(result)) {
+            return result.value
+        }
+
+        // 嵌套的对象
+        if (isObject(result)) {
+            return reactive(result)
+        }
+
+        return result
     },
     set(target, key, newValue, receiver) {
         const oldValue = target[key]
+
         const result = Reflect.set(target, key, newValue, receiver)
+
+        /**
+         * 如果是一个 ref，并且赋值的值不是一个 ref
+         * const a = ref(0)
+         * const target = { a }
+         * target.a = 1
+         */
+        if (isRef(oldValue) && !isRef(newValue)) {
+            oldValue.value = newValue
+            return result
+        }
+
+        // 值改变了才触发更新
         if (hasChanged(target[key], oldValue)) {
             trigger(target, key)
         }
+
         return result
     }
 }

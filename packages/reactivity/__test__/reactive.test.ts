@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { reactive, effect } from "../src/index";
+import { ref, reactive, effect } from "../src/index";
 
 describe('reactivity/reactive', () => {
     it('should be reactivety', () => {
@@ -56,5 +56,38 @@ describe('reactivity/reactive', () => {
         expect(fn).toBeCalledTimes(1)
         state.a = 1
         expect(fn).toBeCalledTimes(1)
+    })
+
+    it('should unref of the ref', () => {
+        const count = ref(1) as any
+        const state = reactive({
+            count
+        })
+        const fn = vi.fn(() => {
+            state.count
+        })
+        effect(fn)
+        expect(state.count).toBe(1)
+        expect(fn).toBeCalledTimes(1)
+        state.count = 2
+        expect(state.count).toBe(2)
+        expect(fn).toBeCalledTimes(2)
+    })
+
+    it('Should handle nested objects', () => {
+        const state = reactive({
+            a: {
+                b: 1
+            }
+        })
+        const fn = vi.fn(() => {
+            state.a.b
+        })
+        effect(fn)
+        expect(state.a.b).toBe(1)
+        expect(fn).toBeCalledTimes(1)
+        state.a.b++
+        expect(state.a.b).toBe(2)
+        expect(fn).toBeCalledTimes(2)
     })
 })
