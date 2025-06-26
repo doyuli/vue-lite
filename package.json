@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.js reactivity --format esm",
+    "dev:shared": "node scripts/dev.js shared --format cjs",
     "test": "vitest"
   },
   "keywords": [],
