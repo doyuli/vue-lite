@@ -55,8 +55,6 @@ export class ComputedRefImpl implements Dependency, Subscriber {
         try {
             const oldValue = this._value
             this._value = this.fn()
-            // 更新完了就不是脏值了
-            this.dirty = false
             // 派发更新时判断是否需要通知 subs 重新执行
             return hasChanged(this._value, oldValue)
         } finally {

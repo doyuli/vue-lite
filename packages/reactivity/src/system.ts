@@ -9,6 +9,7 @@ export interface Subscriber {
   deps: Link | undefined
   depsTail: Link | undefined
   tracking: boolean
+  dirty: boolean
 }
 
 export interface Link {
@@ -47,10 +48,10 @@ export function propagate(subs: Link) {
   // 遍历链表，执行订阅者
   while (link) {
     const sub = link.sub
-    if (!sub.tracking) {
+    if (!sub.tracking && !sub.dirty) {
+      sub.dirty = true
       if ('update' in sub) {
         // computed
-        (sub as Computed).dirty = true
         processComputedUpdate(sub as Computed)
       } else {
         queueEffects.push(link.sub)
@@ -85,6 +86,7 @@ export function startTracking(sub: Subscriber) {
  * 结束依赖追踪
  */
 export function endTracking(sub: Subscriber) {
+  sub.dirty = false
   const depsTail = sub.depsTail
   // 尝试复用节点失败时，
   // 新创建的 link 节点的 nextDep 会指向这个复用失败的节点

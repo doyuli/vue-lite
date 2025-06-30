@@ -11,6 +11,9 @@ class ReactiveEffect {
   // 正在追踪依赖
   tracking = false
 
+  // 标记当前 effect 是否已经被 dep 收集
+  dirty = false
+
   constructor(public fn: Function) { }
 
   run() {
