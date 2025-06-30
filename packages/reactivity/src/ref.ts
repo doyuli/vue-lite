@@ -3,7 +3,7 @@ import { activeSub } from './effect'
 import { type Link, link, propagate } from './system'
 import { hasChanged, isObject } from '@vue/shared';
 
-enum ReactiveFlags {
+export enum ReactiveFlags {
   IS_REF = '__v_isRef', // 只读属性，表示是否是响应式对象
 }
 

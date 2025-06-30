@@ -1,3 +1,5 @@
+import { type ComputedRefImpl as Computed } from './computed';
+
 export interface Dependency {
   subs: Link | undefined
   subsTail: Link | undefined
@@ -44,13 +46,31 @@ export function propagate(subs: Link) {
 
   // 遍历链表，执行订阅者
   while (link) {
-    if (!link.sub.tracking) {
-      queueEffects.push(link.sub)
+    const sub = link.sub
+    if (!sub.tracking) {
+      if ('update' in sub) {
+        // computed
+        (sub as Computed).dirty = true
+        processComputedUpdate(sub as Computed)
+      } else {
+        queueEffects.push(link.sub)
+      }
     }
     link = link.nextSub
   }
 
   queueEffects.forEach((effect) => effect.notify())
+}
+
+/**
+ * computed 派发更新
+ */
+function processComputedUpdate(sub: Computed) {
+  // 调用 sub.update
+  if (sub.subs && sub.update()) {
+    // 通知 subs 重新执行
+    propagate(sub.subs)
+  }
 }
 
 /**
