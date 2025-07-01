@@ -2,10 +2,8 @@ import { Link, Subscriber, startTracking, endTracking } from "./system";
 
 class ReactiveEffect {
 
-  // 依赖项链表头节点
+  // 储存追踪的响应式依赖
   deps: Link | undefined
-
-  // 依赖项链表尾节点
   depsTail: Link | undefined
 
   // 正在追踪依赖
@@ -29,11 +27,36 @@ class ReactiveEffect {
     const prevSub = activeSub
 
     setActiveSub(this)
+    // 开始追踪依赖，处理节点复用
     startTracking(this)
     try {
       return this.fn()
     } finally {
+
+      /**
+       * 这里不能直接把 activeSub 设置为 undefined
+       * 因为当 effect 嵌套时，内部的 effect 不能正确定位当前活跃的副作用函数
+       * 解决方法：这里设置为上一次的 activeSub
+       */
       setActiveSub(prevSub)
+
+      /**
+      * 结束追踪 清理不必要追踪的依赖
+      * const falg = ref(true)
+      * const flagTureCount = ref(0)
+      * const flagFalseCount = ref(0)
+      * 
+      * effect(() => {
+      *   if(falg.value) {
+      *     flagTureCount.value++
+      *   } else {
+      *     flagFalseCount.value++
+      *   }
+      * })
+      * 
+      * falg.vaue = false
+      * 这时候 flagTureCount 已经不需要被追踪，要被清理
+      */
       endTracking(this)
     }
   }
@@ -65,11 +88,10 @@ export function effect(fn: any, options?: any) {
 
   e.run()
 
-  /**
-   * 绑定 effect 实例
-   */
+  // 把 run 方法 return 出去，绑定 this 指向
   const runner = e.run.bind(e)
-  runner.effect = e // 将 effect 实例挂载到 runner 上，方便后续使用
+  // 挂载 effect 实例
+  runner.effect = e
 
   return runner
 }
