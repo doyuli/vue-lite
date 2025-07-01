@@ -11,7 +11,15 @@ class ReactiveEffect {
   // 正在追踪依赖
   tracking = false
 
-  // 标记当前 effect 是否已经被 dep 收集
+  /**
+   * 标记当前 effect 是否已经被触发更新，
+   * 解决 effect 中多次访问同一个 ref 时，会被多次收集，导致多次触发，
+   * 在 propagate 中通过 dirty 判断是否还要通知 effect 执行 
+   * 
+   * 注意：这里是空间换时间的做法，
+   * 在源码中是在 link 函数中，递归遍历 dep.subs，看看link 中的 sub 是否等于当前 sub，
+   * 等于的话就不收集了，属于时间换空间的做法
+   */
   dirty = false
 
   constructor(public fn: Function) { }
