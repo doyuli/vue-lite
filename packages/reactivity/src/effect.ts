@@ -1,6 +1,6 @@
 import { Link, Subscriber, startTracking, endTracking } from "./system";
 
-class ReactiveEffect {
+export class ReactiveEffect {
 
   // 储存追踪的响应式依赖
   deps: Link | undefined
@@ -20,9 +20,17 @@ class ReactiveEffect {
    */
   dirty = false
 
+  // 当前 effect 是否激活
+  active = true
+
   constructor(public fn: Function) { }
 
   run() {
+    if (!this.active) {
+      // 失活状态 直接执行 fn，不走下面的收集依赖流程
+      return this.fn()
+    }
+
     // 保存上一次执行的 effect，处理嵌套逻辑
     const prevSub = activeSub
 
@@ -73,6 +81,18 @@ class ReactiveEffect {
    */
   notify() {
     this.scheduler()
+  }
+
+  /**
+   * 停止监听
+   */
+  stop() {
+    if (this.active) {
+      // 清理所有依赖
+      startTracking(this)
+      endTracking(this)
+      this.active = false
+    }
   }
 }
 

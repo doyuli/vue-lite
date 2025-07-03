@@ -116,4 +116,19 @@ describe('reactivity/effect', () => {
         count.value++
         expect(fn).toBeCalledTimes(2)
     })
+
+    it('should be stoped', () => {
+        const count = ref(0)
+        const fn = vi.fn(() => {
+            count.value
+        })
+        const e = effect(fn)
+        expect(fn).toBeCalledTimes(1)
+        count.value++
+        expect(fn).toBeCalledTimes(2)
+        e.effect.stop()
+        count.value++
+        expect(count.value).toBe(2)
+        expect(fn).toBeCalledTimes(2)
+    })
 })

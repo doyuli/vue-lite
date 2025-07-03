@@ -25,18 +25,18 @@ export const mutableHandlers: ProxyHandler<any> = {
     set(target, key, newValue, receiver) {
         const oldValue = target[key]
 
-        const result = Reflect.set(target, key, newValue, receiver)
-
         /**
-         * 如果是一个 ref，并且赋值的值不是一个 ref
-         * const a = ref(0)
-         * const target = { a }
-         * target.a = 1
-         */
+        * 如果是一个 ref，并且赋值的值不是一个 ref
+        * const a = ref(0)
+        * const target = { a }
+        * target.a = 1
+        */
         if (isRef(oldValue) && !isRef(newValue)) {
             oldValue.value = newValue
-            return result
+            return true
         }
+
+        const result = Reflect.set(target, key, newValue, receiver)
 
         // 值改变了才触发更新
         if (hasChanged(target[key], oldValue)) {
