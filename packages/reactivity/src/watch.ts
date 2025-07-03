@@ -35,6 +35,8 @@ export function watch(source?: any, cb?: WacthCallback, options?: WatchOptions):
             deep = true
         }
         getter = () => source
+    } else {
+        getter = () => { }
     }
 
     if (deep) {
