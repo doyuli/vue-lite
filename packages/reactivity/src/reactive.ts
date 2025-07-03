@@ -1,7 +1,8 @@
 import { isObject } from "@vue/shared";
 import { mutableHandlers } from "./baseHandlers";
+import { Dep } from "./dep";
 
-export const targetMap = new WeakMap()
+export const targetMap = new WeakMap<object, Map<unknown, Dep>>()
 export const reactiveMap = new WeakMap()
 const reactiveSet = new WeakSet()
 

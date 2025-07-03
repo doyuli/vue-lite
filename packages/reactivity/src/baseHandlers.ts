@@ -1,4 +1,4 @@
-import { hasChanged, isObject } from "@vue/shared";
+import { hasChanged, isArray, isObject } from "@vue/shared";
 import { track, trigger } from "./dep";
 import { reactive } from "./reactive";
 import { isRef } from "./ref";
@@ -26,6 +26,14 @@ export const mutableHandlers: ProxyHandler<any> = {
         const oldValue = target[key]
 
         /**
+         * 如果是数组，保留数组的 oldLength
+         * 用来处理数组的隐式更新 length
+         * 比如 arr.push()
+         */
+        const targetIsArray = isArray(target)
+        const oldLength = targetIsArray ? target.length : 0
+
+        /**
         * 如果是一个 ref，并且赋值的值不是一个 ref
         * const a = ref(0)
         * const target = { a }
@@ -41,6 +49,14 @@ export const mutableHandlers: ProxyHandler<any> = {
         // 值改变了才触发更新
         if (hasChanged(target[key], oldValue)) {
             trigger(target, key)
+        }
+
+        /**
+         * 触发数组的隐式更新
+         * 如果 key === length 会走上面的 hasChanged，这里就没必要了
+         */
+        if (targetIsArray && target.length !== oldLength && key !== 'length') {
+            trigger(target, 'length')
         }
 
         return result

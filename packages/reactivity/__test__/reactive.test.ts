@@ -90,4 +90,49 @@ describe('reactivity/reactive', () => {
         expect(state.a.b).toBe(2)
         expect(fn).toBeCalledTimes(2)
     })
+
+    it('should be reactivety with array', () => {
+        const state = reactive([1, 2, 3, 4])
+        const fn = vi.fn(() => {
+            state[0]
+        })
+        effect(fn)
+        expect(state[0]).toBe(1)
+        expect(fn).toBeCalledTimes(1)
+        state[0]++
+        expect(fn).toBeCalledTimes(2)
+        expect(state[0]).toBe(2)
+    })
+
+    it('should be updated when the array length changes', () => {
+        const state = reactive([1, 2, 3, 4])
+        const fn = vi.fn(() => {
+            state[2]
+        })
+        const lengthFn = vi.fn(() => {
+            state.length
+        })
+        effect(fn)
+        effect(lengthFn)
+        expect(fn).toBeCalledTimes(1)
+        expect(lengthFn).toBeCalledTimes(1)
+        state.length = 2
+        expect(fn).toBeCalledTimes(2)
+        expect(lengthFn).toBeCalledTimes(2)
+        expect(state[2]).toBe(undefined)
+    })
+
+    it('should implicit update with array', () => {
+        const state = reactive([1, 2, 3, 4])
+        const fn = vi.fn(() => {
+            state.length
+        })
+        effect(fn)
+        expect(fn).toBeCalledTimes(1)
+        state.push(5)
+        expect(fn).toBeCalledTimes(2)
+        state.shift()
+        expect(fn).toBeCalledTimes(3)
+        expect(state).toEqual([2, 3, 4, 5])
+    })
 })
