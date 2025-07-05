@@ -36,14 +36,6 @@ export class RefImpl {
   }
 }
 
-export function ref(value: any) {
-  return new RefImpl(value)
-}
-
-export function isRef(value: unknown) {
-  return !!(value && value[ReactiveFlags.IS_REF])
-}
-
 /**
  * 依赖收集 建立链表关系
  */
@@ -60,4 +52,71 @@ export function triggerRef(dep: RefImpl) {
   if (dep.subs) {
     propagate(dep.subs)
   }
+}
+
+export function ref(value: any) {
+  return new RefImpl(value)
+}
+
+export function isRef(value: unknown) {
+  return !!(value && value[ReactiveFlags.IS_REF])
+}
+
+export function unref(value: any) {
+  return isRef(value) ? value.value : value
+}
+
+/**
+ * toRef Dependency
+ */
+class ObjectRefImpl {
+  [ReactiveFlags.IS_REF] = true
+
+  constructor(public _object: object, public _key: string) {}
+
+  get value() {
+    return this._object[this._key]
+  }
+
+  set value(newValue) {
+    this._object[this._key] = newValue
+  }
+}
+
+export function toRef(target: object, key: string) {
+  return new ObjectRefImpl(target, key)
+}
+
+export function toRefs(target: object) {
+  const result = {}
+  for (const key in target) {
+    result[key] = new ObjectRefImpl(target, key)
+  }
+  return result
+}
+
+/**
+ * 解包 ref
+ * @param target
+ */
+export function proxyRefs(target: object) {
+  const proxy = new Proxy(target, {
+    get(target, key, receiver) {
+      const result = Reflect.get(target, key, receiver)
+      return unref(result)
+    },
+    set(target, key, newValue, receiver) {
+      const oldValue = target[key]
+
+      /** 原值是个 ref，新值不是，直接走 ref 更新逻辑 */
+      if (isRef(oldValue) && !isRef(newValue)) {
+        oldValue.value = newValue
+        return true
+      }
+
+      return Reflect.set(target, key, newValue, receiver)
+    },
+  })
+
+  return proxy
 }
