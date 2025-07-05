@@ -7,7 +7,7 @@ export default antfu({
     quotes: 'single',
   },
   rules: {
-    'no-console':'off',
+    'no-console': 'off',
     'ts/no-unused-expressions': 'off',
     'ts/no-use-before-define': 'off',
     'ts/explicit-function-return-type': 'off',
