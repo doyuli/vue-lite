@@ -13,12 +13,19 @@
     import { rendererOption } from '../dist/vue.esm.js';
     import { h, render, createRenderer } from '../../../node_modules/vue/dist/vue.esm-browser.js';
 
-    const vnode = h('div', 'Hello world')
+    const vnode = h('div', { style: 'color: red; background-color: green' }, 'Hello world')
 
     // render(vnode, app)
 
     const customRender = createRenderer(rendererOption)
     customRender.render(vnode, app)
+
+    const vnode1 = h('div', { style: { color: 'blue', backgroundColor: 'yellow' } }, 'Hello world')
+    // const vnode1 = h('div', { style: 'color: blue' }, 'Hello world')
+
+    setTimeout(() => {
+      customRender.render(vnode1, app)
+    }, 1000)
   </script>
 </body>
 
