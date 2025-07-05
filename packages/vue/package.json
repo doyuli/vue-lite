@@ -17,5 +17,8 @@
       "cjs",
       "global"
     ]
+  },
+  "dependencies": {
+    "@vue/runtime-dom": "workspace:^"
   }
 }

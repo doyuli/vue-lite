@@ -1,3 +1,1 @@
-export function hello() {
-  console.log('Hello from Vue!')
-}
+export * from '@vue/runtime-dom'
