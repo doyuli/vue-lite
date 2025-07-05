@@ -1,8 +1,8 @@
-import esbuild from 'esbuild'
-import { resolve, dirname } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import { createRequire } from 'node:module'
+import esbuild from 'esbuild'
 
 const require = createRequire(import.meta.url)
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -41,4 +41,4 @@ esbuild
     globalName: pkg.buildOptions?.name,
     platform: format === 'cjs' ? 'node' : 'browser',
   })
-  .then((ctx) => ctx.watch())
+  .then(ctx => ctx.watch())

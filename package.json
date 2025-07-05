@@ -1,26 +1,30 @@
 {
   "name": "vue-lite",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "type": "module",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.6.5",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "main": "index.js",
   "scripts": {
     "dev": "node scripts/dev.js reactivity --format esm",
     "dev:shared": "node scripts/dev.js shared --format cjs",
-    "test": "vitest"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.6.5",
-  "devDependencies": {
-    "@types/node": "^22.15.2",
-    "esbuild": "^0.25.3",
-    "prettier": "^3.5.3",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "test": "vitest",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "dependencies": {
     "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.16.2",
+    "@types/node": "^22.15.2",
+    "esbuild": "^0.25.3",
+    "eslint": "^9.30.1",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

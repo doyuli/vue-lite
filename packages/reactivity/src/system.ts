@@ -1,4 +1,4 @@
-import { type ComputedRefImpl as Computed } from './computed';
+import type { ComputedRefImpl as Computed } from './computed'
 
 export interface Dependency {
   subs: Link | undefined
@@ -43,7 +43,7 @@ export function link(dep: Dependency, sub: Subscriber) {
  */
 export function propagate(subs: Link) {
   let link = subs
-  let queueEffects = []
+  const queueEffects = []
 
   // 遍历链表，执行订阅者
   while (link) {
@@ -53,14 +53,15 @@ export function propagate(subs: Link) {
       if ('update' in sub) {
         // computed
         processComputedUpdate(sub as Computed)
-      } else {
+      }
+      else {
         queueEffects.push(link.sub)
       }
     }
     link = link.nextSub
   }
 
-  queueEffects.forEach((effect) => effect.notify())
+  queueEffects.forEach(effect => effect.notify())
 }
 
 /**
@@ -84,16 +85,16 @@ export function startTracking(sub: Subscriber) {
   /**
    * effect 每次开始追踪依赖时，都把 depsTail 设置为 undefined
    * 在 ref 的 getter 中创建依赖关联关系，即在 link 函数中
-   * 
+   *
    * 当 sub.depsTail 和 sub.deps 都为 undefined 时，说明该节点没有被收集过
-   * 
+   *
    * 当 sub.depsTail 为 undefined，sub.deps 有值时，
    * 判断 sub.deps.dep 是否为当前所收集的依赖，是的话则复用，
    * 最后把 sub.depsTail 指向 sub.deps
-   * 
+   *
    * 当 sub.depsTail 和 sub.deps 都有值时，
    * 判断 sub.depsTail.nextDep.dep 是否为当前所收集的依赖，是的话则复用
-   * 
+   *
    * 可以理解为这里每次都会去尝试复用 sub.depsTail.nextDep，
    * 但是由于 effect 执行之前会把 depsTail 设置为 undefined，
    * 所以第一次尝试复用的是 sub.deps
@@ -120,7 +121,7 @@ export function endTracking(sub: Subscriber) {
       depsTail.nextDep = undefined
     }
   }
-  // depsTail 为 undefined，sub.deps 有值，则说明全部都是过期依赖 
+  // depsTail 为 undefined，sub.deps 有值，则说明全部都是过期依赖
   else if (sub.deps) {
     clearTracking(sub.deps)
     sub.deps = undefined
@@ -165,8 +166,12 @@ export function clearTracking(link: Link) {
   }
 }
 
-function createLink(dep: Dependency, sub: Subscriber, nextDep: Link | undefined, depsTail: Link | undefined) {
-
+function createLink(
+  dep: Dependency,
+  sub: Subscriber,
+  nextDep: Link | undefined,
+  depsTail: Link | undefined,
+) {
   const newLink = {
     sub,
     dep,
@@ -179,7 +184,8 @@ function createLink(dep: Dependency, sub: Subscriber, nextDep: Link | undefined,
   if (dep.subsTail) {
     dep.subsTail.nextSub = newLink
     newLink.prevSub = dep.subsTail
-  } else {
+  }
+  else {
     dep.subs = newLink
   }
   dep.subsTail = newLink
@@ -187,7 +193,8 @@ function createLink(dep: Dependency, sub: Subscriber, nextDep: Link | undefined,
   // 建立 sub 关联关系
   if (depsTail) {
     depsTail.nextDep = newLink
-  } else {
+  }
+  else {
     sub.deps = newLink
   }
   sub.depsTail = newLink

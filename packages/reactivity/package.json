@@ -2,13 +2,13 @@
   "name": "@vue/reactivity",
   "version": "1.0.0",
   "description": "@vue/reactivity",
+  "sideEffects": false,
   "main": "dist/reactivity.cjs.js",
   "module": "dist/reactivity.esm.js",
   "files": [
-    "index.js",
-    "dist"
+    "dist",
+    "index.js"
   ],
-  "sideEffects": false,
   "buildOptions": {
     "name": "VueReactivity",
     "formats": [

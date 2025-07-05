@@ -2,13 +2,13 @@
   "name": "@vue/shared",
   "version": "1.0.0",
   "description": "@vue/shared",
+  "sideEffects": false,
   "main": "dist/shared.cjs.js",
   "module": "dist/shared.esm.js",
   "files": [
-    "index.js",
-    "dist"
+    "dist",
+    "index.js"
   ],
-  "sideEffects": false,
   "buildOptions": {
     "name": "VueShared",
     "formats": [

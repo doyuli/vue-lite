@@ -1,7 +1,7 @@
-import { Link, Subscriber, startTracking, endTracking } from "./system";
+import type { Link, Subscriber } from './system'
+import { endTracking, startTracking } from './system'
 
 export class ReactiveEffect {
-
   // 储存追踪的响应式依赖
   deps: Link | undefined
   depsTail: Link | undefined
@@ -12,8 +12,8 @@ export class ReactiveEffect {
   /**
    * 标记当前 effect 是否已经被触发更新，
    * 解决 effect 中多次访问同一个 ref 时，会被多次收集，导致多次触发，
-   * 在 propagate 中通过 dirty 判断是否还要通知 effect 执行 
-   * 
+   * 在 propagate 中通过 dirty 判断是否还要通知 effect 执行
+   *
    * 注意：这里是空间换时间的做法，
    * 在源码中是在 link 函数中，递归遍历 dep.subs，看看link 中的 sub 是否等于当前 sub，
    * 等于的话就不收集了，属于时间换空间的做法
@@ -39,8 +39,8 @@ export class ReactiveEffect {
     startTracking(this)
     try {
       return this.fn()
-    } finally {
-
+    }
+    finally {
       /**
        * 这里不能直接把 activeSub 设置为 undefined
        * 因为当 effect 嵌套时，内部的 effect 不能正确定位当前活跃的副作用函数
@@ -49,22 +49,22 @@ export class ReactiveEffect {
       setActiveSub(prevSub)
 
       /**
-      * 结束追踪 清理不必要追踪的依赖
-      * const falg = ref(true)
-      * const flagTureCount = ref(0)
-      * const flagFalseCount = ref(0)
-      * 
-      * effect(() => {
-      *   if(falg.value) {
-      *     flagTureCount.value++
-      *   } else {
-      *     flagFalseCount.value++
-      *   }
-      * })
-      * 
-      * falg.vaue = false
-      * 这时候 flagTureCount 已经不需要被追踪，要被清理
-      */
+       * 结束追踪 清理不必要追踪的依赖
+       * const falg = ref(true)
+       * const flagTureCount = ref(0)
+       * const flagFalseCount = ref(0)
+       *
+       * effect(() => {
+       *   if(falg.value) {
+       *     flagTureCount.value++
+       *   } else {
+       *     flagFalseCount.value++
+       *   }
+       * })
+       *
+       * falg.vaue = false
+       * 这时候 flagTureCount 已经不需要被追踪，要被清理
+       */
       endTracking(this)
     }
   }
@@ -97,11 +97,10 @@ export class ReactiveEffect {
 }
 
 export function effect(fn: any, options?: any) {
-
   const e = new ReactiveEffect(fn)
 
   /**
-   * 合并 options 
+   * 合并 options
    * 比如：scheduler
    */
   Object.assign(e, options)
@@ -116,7 +115,7 @@ export function effect(fn: any, options?: any) {
   return runner
 }
 
-export let activeSub: Subscriber | undefined = undefined
+export let activeSub: Subscriber | undefined
 
 export function setActiveSub(sub: Subscriber | undefined) {
   activeSub = sub

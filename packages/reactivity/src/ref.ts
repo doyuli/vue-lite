@@ -1,7 +1,8 @@
-import { reactive } from './reactive';
+import type { Link } from './system'
+import { hasChanged, isObject } from '@vue/shared'
 import { activeSub } from './effect'
-import { type Link, link, propagate } from './system'
-import { hasChanged, isObject } from '@vue/shared';
+import { reactive } from './reactive'
+import { link, propagate } from './system'
 
 export enum ReactiveFlags {
   IS_REF = '__v_isRef', // 只读属性，表示是否是响应式对象

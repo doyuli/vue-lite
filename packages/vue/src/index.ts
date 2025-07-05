@@ -1,3 +1,3 @@
 export function hello() {
-  console.log('Hello from Vue!');
+  console.log('Hello from Vue!')
 }

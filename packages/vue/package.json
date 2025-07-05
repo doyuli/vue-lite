@@ -2,13 +2,13 @@
   "name": "vue",
   "version": "1.0.0",
   "description": "vue",
+  "sideEffects": false,
   "main": "dist/vue.cjs.js",
   "module": "dist/vue.esm.js",
   "files": [
-    "index.js",
-    "dist"
+    "dist",
+    "index.js"
   ],
-  "sideEffects": false,
   "buildOptions": {
     "name": "Vue",
     "formats": [
