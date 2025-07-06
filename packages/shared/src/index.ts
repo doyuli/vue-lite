@@ -14,6 +14,10 @@ export function isString(value: unknown): value is string {
   return typeof value === 'string'
 }
 
+export function isOn(value: string): boolean {
+  return /^on[A-Z]/.test(value)
+}
+
 export function hasChanged(newValue: unknown, oldValue: unknown): boolean {
   return !Object.is(newValue, oldValue)
 }
