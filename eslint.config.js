@@ -12,6 +12,8 @@ export default antfu({
     'ts/no-use-before-define': 'off',
     'ts/explicit-function-return-type': 'off',
     'ts/no-unsafe-function-type': 'off',
+    'ts/prefer-literal-enum-member': 'off',
     'import/no-mutable-exports': 'off',
+    'prefer-rest-params': 'off',
   },
 })
