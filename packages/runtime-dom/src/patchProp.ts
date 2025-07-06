@@ -1,5 +1,6 @@
 import type { RendererOptions } from '@vue/runtime-core'
 import { isOn } from '@vue/shared'
+import { patchAttr } from './modules/attr'
 import { patchClass } from './modules/class'
 import { patchEvent } from './modules/event'
 import { patchStyle } from './modules/style'
@@ -16,5 +17,8 @@ export const patchProp: DOMRendererOptions['patchProp'] = (el, key, prevValue, n
   // @click => onClick
   else if (isOn(key)) {
     patchEvent(el, key, nextValue)
+  }
+  else {
+    patchAttr(el, key, nextValue)
   }
 }
