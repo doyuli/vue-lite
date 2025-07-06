@@ -29,7 +29,9 @@ export function patchStyle(el: Element, prevValue: Style, nextValue: Style) {
 
     // 处理新值
     for (const key in nextValue) {
-      style[key] = nextValue[key]
+      // 处理 falsy value
+      const val = nextValue[key] == null ? '' : nextValue[key]
+      style[key] = val
     }
   }
   else {
