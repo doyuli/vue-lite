@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "node scripts/dev.js --format esm",
     "dev:shared": "node scripts/dev.js shared --format cjs",
-    "test": "vitest",
+    "test": "pnpm test:unit",
     "test:unit": "vitest --project unit",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
