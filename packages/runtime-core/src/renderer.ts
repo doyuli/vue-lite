@@ -86,7 +86,7 @@ export function createRenderer(options: RendererOptions) {
       // 文本子节点
       hostSetElementText(el, children)
     }
-    else {
+    else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 数组子节点
       mountChildren(children, el)
     }
@@ -129,9 +129,11 @@ export function createRenderer(options: RendererOptions) {
      * 1. 新的是文本
      *  1.1 旧的是数组
      *  1.2 旧的也是文本
+     *  1.3 旧的是null
      * 2. 新的是数组
      *  2.1 旧的是文本
      *  2.2 旧的也是数组
+     *  2.3 旧的是null
      */
     // 新的是文本
     if (nextShapeFlag & ShapeFlags.TEXT_CHILDREN) {
@@ -145,15 +147,32 @@ export function createRenderer(options: RendererOptions) {
         hostSetElementText(el, n2.children)
       }
     }
-    // 新的是数组
+    // 新的是数组 或者 null
     else {
+      // 旧的是文本
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-        // 干掉旧的文本
         hostSetElementText(el, '')
-        // 挂载新的节点
-        mountChildren(n2.children, el)
-      } else {
-        // 新的是数组，老的也是数组 全量 diff
+        if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 挂载新的节点
+          mountChildren(n2.children, el)
+        }
+      }
+      // 老的是数组
+      else if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 新的是数组，老的也是数组 全量 diff
+        }
+        else {
+          // 老的是数组，新的是 null
+          unmountChildren(n1.children)
+        }
+      }
+      // 老的是 null
+      else {
+        // 新的是数组，挂载新的
+        if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          mountChildren(n2.children, el)
+        }
       }
     }
   }
@@ -216,9 +235,10 @@ export function createRenderer(options: RendererOptions) {
        * 挂载 更新
        */
       patch(container._vnode || null, vnode, container)
-      // 把 vnode 挂载在 el 上
-      container._vnode = vnode
     }
+
+    // 把 vnode 挂载在 container 上，以便于下一次 diff 或者卸载
+    container._vnode = vnode
   }
 
   const createApp = (vnode: VNode, container: Element) => {

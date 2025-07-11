@@ -9,7 +9,7 @@ export function isVNode(vlaue: any) {
   return vlaue?.__v_isVNode
 }
 
-export function createVNode(type: string, props?: any, children?: any) {
+export function createVNode(type: string, props?: any, children: any = null) {
   let shapeFlag: number
 
   if (isString(type)) {
