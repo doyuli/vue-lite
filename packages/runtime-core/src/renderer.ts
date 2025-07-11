@@ -50,7 +50,7 @@ export function createRenderer(options: RendererOptions) {
    * @param children
    * @param el
    */
-  const mountChildren = (children: VNode['children'], el: RendererElement) => {
+  const mountChildren = (children: VNodeChildren, el: RendererElement) => {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
       // 递归挂载子节点
@@ -63,7 +63,7 @@ export function createRenderer(options: RendererOptions) {
    * @param vnode
    * @param container
    */
-  const mountElement = (vnode: VNode, container: RendererElement) => {
+  const mountElement = (vnode: VNode, container: RendererElement, anchor: RendererElement = null) => {
     const { type, props, children, shapeFlag } = vnode
 
     // 创建 dom 元素
@@ -92,7 +92,7 @@ export function createRenderer(options: RendererOptions) {
     }
 
     // 把 el 挂载到 container 中
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
   /**
@@ -109,7 +109,7 @@ export function createRenderer(options: RendererOptions) {
 
     // 设置新的
     if (newProps) {
-      for (const key in oldProps) {
+      for (const key in newProps) {
         hostPatchProp(el, key, oldProps?.[key], newProps[key])
       }
     }
@@ -161,6 +161,7 @@ export function createRenderer(options: RendererOptions) {
       else if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // 新的是数组，老的也是数组 全量 diff
+          patchKeyedChildren(n1.children, n2.children, el)
         }
         else {
           // 老的是数组，新的是 null
@@ -175,6 +176,82 @@ export function createRenderer(options: RendererOptions) {
         }
       }
     }
+  }
+
+  /**
+   * 全量 diff
+   * @param c1
+   * @param c2
+   * @param el
+   */
+  const patchKeyedChildren = (c1: VNodeChildren, c2: VNodeChildren, container: RendererElement) => {
+    // 双端 diff
+    let i = 0
+    let e1 = c1.length - 1
+    let e2 = c2.length - 1
+
+    /**
+     * 头部对比
+     * c1 => [a,b]
+     * c2 => [a,b,c]
+     * 开始时：i = 0, e1 = 1, e2 = 2
+     * 结束时：i = 2, e1 = 1, e2 = 2
+     */
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = c2[i]
+      if (isSameVNodeType(n1, n2)) {
+        // 如果 n1 和 n2 是同一个类型节点，则更新
+        patch(n1, n2, container)
+      }
+      else {
+        break
+      }
+      i++
+    }
+
+    /**
+     * 尾部对比
+     * c1 => [a,b]
+     * c2 => [c,a,b]
+     * 开始时：i = 0, e1 = 1, e2 = 2
+     * 结束时：i = 0, e1 = -1, e2 = 0
+     */
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1]
+      const n2 = c2[e2]
+      if (isSameVNodeType(n1, n2)) {
+        // 如果 n1 和 n2 是同一个类型节点，则更新
+        patch(n1, n2, container)
+      }
+      else {
+        break
+      }
+      // 更新尾指针
+      e1--
+      e2--
+    }
+
+    if (i > e1) {
+      // 表示老的少，新的多，要挂载新的，挂载范围为 i-e2
+      const nextPos = e2 + 1
+      const anchor = nextPos < c2.length ? c2[nextPos].el : null
+      while (i <= e2) {
+        patch(null, c2[i], container, anchor)
+        i++
+      }
+    }
+    else if (i > e2) {
+      // 表示老的多，新的少，要卸载老的，卸载返回 i-e1
+      while (i <= e1) {
+        unmount(c1[i])
+        i++
+      }
+    }
+
+    console.log(i, e1, e2)
+
+    // 乱序 diff
   }
 
   /**
@@ -197,7 +274,7 @@ export function createRenderer(options: RendererOptions) {
    * @param n2 新节点
    * @param container 容器
    */
-  const patch = (n1: VNode, n2: VNode, container: RendererElement) => {
+  const patch = (n1: VNode, n2: VNode, container: RendererElement, anchor: RendererElement = null) => {
     if (n1 === n2) {
       return
     }
@@ -215,7 +292,7 @@ export function createRenderer(options: RendererOptions) {
 
     if (n1 == null) {
       // 挂载
-      mountElement(n2, container)
+      mountElement(n2, container, anchor)
     }
     else {
       // 更新
@@ -249,6 +326,8 @@ export function createRenderer(options: RendererOptions) {
     createApp,
   }
 }
+
+type VNodeChildren = VNode['children']
 
 /** https://github.com/vuejs/core/blob/vapor/packages/runtime-dom/src/nodeOps.ts */
 export interface RendererNode {
