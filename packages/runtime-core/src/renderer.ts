@@ -1,5 +1,6 @@
 import type { VNode } from './vnode'
 import { ShapeFlags } from '@vue/shared'
+import { createAppAPI } from './apiCreateApp'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 
 /**
@@ -459,12 +460,9 @@ export function createRenderer(options: RendererOptions) {
     container._vnode = vnode
   }
 
-  const createApp = (vnode: VNode, container: Element) => {
-    console.log('🚀 ~ render ~ vnode,el:', vnode, container)
-  }
   return {
     render,
-    createApp,
+    createApp: createAppAPI(render),
   }
 }
 

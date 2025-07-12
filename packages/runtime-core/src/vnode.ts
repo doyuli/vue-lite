@@ -71,9 +71,12 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
   return vnode
 }
 
+export type Component = any
+
 export type VNodeTypes
   = | string
     | VNode
+    | Component
     | typeof Text
     | typeof Comment
 
