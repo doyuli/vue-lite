@@ -264,6 +264,11 @@ export function createRenderer(options: RendererOptions) {
       const s1 = i
       const s2 = i
 
+      // 记录新旧节点下标的映射关系，求最长递增子序列
+      const newIndexToOldIndexMap: number[] = Array.from({ length: e2 - s2 + 1 })
+      // -1 代表不需要计算
+      newIndexToOldIndexMap.fill(-1)
+
       /**
        * 遍历新节点 s2-e2 乱序区间
        * 储存新子节点的 key 和 index 的映射关系
@@ -275,6 +280,11 @@ export function createRenderer(options: RendererOptions) {
         keyToNewIndexMap.set(n2.key, j)
       }
 
+      // 临时储存下标，看看是不是递增的，是的话就不需要计算最长递增子序列
+      let pos = -1
+      // 是否需要移动，计算最长递增子序列
+      let moved = false
+
       /**
        * 遍历旧节点 s1-e1 乱序区间
        * 找到相同 key 的 vnode 进行 patch
@@ -282,14 +292,33 @@ export function createRenderer(options: RendererOptions) {
        */
       for (let j = s1; j <= e1; j++) {
         const n1 = c1[j]
+        // 找到旧节点 key 对应的新节点下标
         const newIndex = keyToNewIndexMap.get(n1.key)
         if (newIndex) {
+          // 判断当前节点下标是否是递增的
+          if (newIndex > pos) {
+            pos = newIndex
+          }
+          else {
+            // 需要计算最长递增子序列
+            moved = true
+          }
+
+          // 建立新旧节点的 index 关联关系
+          newIndexToOldIndexMap[newIndex] = j
+
+          // 更新
           patch(n1, c2[newIndex], container)
         }
         else {
           unmount(n1)
         }
       }
+
+      // 求最长递增子序列
+      const newIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : []
+      // set.has 性能比 arr.includes 好
+      const sequenceSet = new Set(newIndexSequence)
 
       /**
        * 遍历新节点，调整顺序
@@ -301,8 +330,11 @@ export function createRenderer(options: RendererOptions) {
         // 它后面的一个元素
         const anchor = c2[j + 1]?.el || null
         if (n2.el) {
-          // 有 vnode.el,说明之前 patch 过，倒序插入
-          hostInsert(n2.el, container, anchor)
+          // 有 vnode.el,说明之前 patch 过，调整顺序
+          if (moved && !sequenceSet.has(j)) {
+            // 不在最长递增子序列才需要移动
+            hostInsert(n2.el, container, anchor)
+          }
         }
         else {
           // 没有则说明是新元素，挂载
@@ -383,6 +415,89 @@ export function createRenderer(options: RendererOptions) {
     render,
     createApp,
   }
+}
+
+/**
+ * 求最长递增子序列
+ * @param arr
+ */
+function getSequence(arr: number[]) {
+  // 储存下标
+  const result = []
+
+  // 记录前驱节点
+  const map = new Map()
+
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i]
+
+    if (item === -1 || item === undefined) {
+      // 过滤掉 -1，不在计算范围内
+      continue
+    }
+
+    if (result.length === 0) {
+      result.push(i)
+      continue
+    }
+
+    const lastIndex = result[result.length - 1]
+    const lastItem = arr[lastIndex]
+
+    /**
+     * arr = [10, 3, 5, 9, 12, 8, 15, 18]
+     * seq = [3, 5, 9, 12, 15, 18]
+     * res = [1, 2, 3, 4, 6, 7]
+     */
+    if (item > lastItem) {
+      // 记录索引
+      result.push(i)
+      // 记录前驱节点
+      map.set(i, lastIndex)
+      continue
+    }
+
+    /**
+     * item < lastItem
+     * 找到最合适的来替换
+     * 二分查找
+     */
+    let left = 0
+    let right = result.length - 1
+
+    while (left < right) {
+      const mid = Math.floor((left + right) / 2)
+      const midItem = arr[result[mid]]
+      if (midItem < item) {
+        left = mid + 1
+      }
+      else {
+        right = mid
+      }
+    }
+
+    if (arr[result[left]] > item) {
+      // 找到最合适的，替换索引
+      result[left] = i
+      if (left > 0) {
+        // 第一个的话不需要记录
+        map.set(i, result[left - 1])
+      }
+    }
+  }
+
+  // 反向追溯
+  let l = result.length
+  let last = result[l - 1]
+  while (l > 0) {
+    l--
+    // 纠正顺序
+    result[l] = last
+    // 找前驱节点
+    last = map.get(last)
+  }
+
+  return result
 }
 
 type VNodeChildren = VNode['children']
