@@ -1,3 +1,4 @@
+import type { VNodeTypes } from './vnode'
 import { isArray, isObject } from '@vue/shared'
 import { createVNode, isVNode } from './vnode'
 
@@ -17,7 +18,7 @@ import { createVNode, isVNode } from './vnode'
  * @param propsOrChildren
  * @param children
  */
-export function h(type: string, propsOrChildren?: any, children?: any) {
+export function h(type: VNodeTypes, propsOrChildren?: any, children?: any) {
   const l = arguments.length
 
   if (l === 2) {

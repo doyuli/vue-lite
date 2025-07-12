@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { h, Text, render } from '../dist/vue.esm.js';
+
+    const vnode1 = h(Text, null, 'hello world')
+    const vnode2 = h(Text, null, 'world hello')
+    const vnode3 = h('div', null, ['hello', 'world'])
+    const vnode4 = h('div', null, ['world', 'hello'])
+
+    render(vnode3, app)
+
+    setTimeout(() => {
+      render(vnode4, app)
+      console.log("🚀 ~ setTimeout ~ vnode4:", vnode4)
+    }, 1000)
+  </script>
+</body>
+
+</html>

@@ -1,5 +1,24 @@
 import type { RendererElement, RendererNode } from './renderer'
-import { isArray, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isNumber, isString, ShapeFlags } from '@vue/shared'
+
+/**
+ * 文本节点标记
+ */
+export const Text = Symbol('v-txt')
+
+/**
+ * 标准化 vnode
+ * @param vnode
+ */
+export function normalizeVNode(vnode: VNode): VNode {
+  if (isString(vnode) || isNumber(vnode)) {
+    return createVNode(Text, null, String(vnode))
+  }
+  else if (isVNode(vnode)) {
+    return vnode
+  }
+  return vnode
+}
 
 export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
@@ -9,8 +28,8 @@ export function isVNode(vlaue: any) {
   return vlaue?.__v_isVNode
 }
 
-export function createVNode(type: string, props?: any, children: any = null) {
-  let shapeFlag: number
+export function createVNode(type: VNodeTypes, props?: any, children: any = null): VNode {
+  let shapeFlag: number = 0
 
   if (isString(type)) {
     /**
@@ -47,10 +66,16 @@ export function createVNode(type: string, props?: any, children: any = null) {
     el: null,
     appContext: null,
     shapeFlag,
-  }
+  } as VNode
 
   return vnode
 }
+
+export type VNodeTypes
+  = | string
+    | VNode
+    | typeof Text
+    | typeof Comment
 
 /** Preventing errors */
 type VNodeNormalizedRef = any
