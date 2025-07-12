@@ -1,6 +1,8 @@
 import type { VNode } from './vnode'
+import { ReactiveEffect } from '@vue/reactivity'
 import { ShapeFlags } from '@vue/shared'
 import { createAppAPI } from './apiCreateApp'
+import { createComponentInstance, setupComponent } from './component'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 
 /**
@@ -403,6 +405,61 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
+   * 组件的挂载
+   * @param vnode
+   * @param container
+   * @param anchor
+   */
+  const mountComponent = (vnode: VNode, container: RendererElement, anchor: RendererElement = null) => {
+    // 创建组件实例
+    const instance = createComponentInstance(vnode)
+    // 初始化组件状态
+    setupComponent(instance)
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        // 获取 subTree，this 指向 instance.setupState
+        const subTree = instance.render.call(instance.setupState)
+        // 将 subTree 挂载在页面
+        patch(null, subTree, container, anchor)
+        // 保留上一次的 subTree，更新用
+        instance.subTree = subTree
+        // 标记挂载
+        instance.isMounted = true
+      } 
+      else {
+        // 已经挂载，需要更新
+        const prevSubTree = instance.subTree
+        const subTree = instance.render.call(instance.setupState)
+        patch(prevSubTree, subTree, container, anchor)
+        // 保留上一次的 subTree，下次更新用
+        instance.subTree = subTree
+      }
+
+    }
+
+    // 创建 effect
+    const effect = new ReactiveEffect(componentUpdateFn)
+    effect.run()
+  }
+
+  /**
+   * 组件的挂载、更新
+   * @param n1
+   * @param n2
+   * @param container
+   * @param anchor
+   */
+  const processComponent = (n1: VNode, n2: VNode, container: RendererElement, anchor: RendererElement = null) => {
+    if (n1 == null) {
+      // 挂载
+      mountComponent(n2, container, anchor)
+    }
+    else {
+      // 更新
+    }
+  }
+
+  /**
    * 挂载和更新函数
    * @param n1 老节点
    * @param n2 新节点
@@ -432,12 +489,13 @@ export function createRenderer(options: RendererOptions) {
         break
 
       default:
-        // dom 的挂载、更新
         if (shapeFlag & ShapeFlags.ELEMENT) {
+          // dom 的挂载、更新
           processElement(n1, n2, container, anchor)
         }
         else if (shapeFlag & ShapeFlags.COMPONENT) {
-          // 组件
+          // 组件的挂载、更新
+          processComponent(n1, n2, container, anchor)
         }
     }
   }

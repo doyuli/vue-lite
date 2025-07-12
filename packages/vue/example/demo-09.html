@@ -14,21 +14,20 @@
     import { ref, h, createApp } from '../dist/vue.esm.js';
 
     const Comp = {
-      setup() {
-        const count = ref(0)
-        btn.onclick = () => {
-          count.value++
-        }
-        return {
-          count
-        }
+      props: {
+        msg: String
+      },
+      setup(props, { attrs }) {
+        console.log("🚀 ~ setup ~ attrs:", attrs)
+        console.log("🚀 ~ setup ~ props:", props)
+        return {}
       },
       render() {
         return h('div', this.count)
       }
     }
 
-    createApp(Comp).mount('#app')
+    createApp(Comp, { msg: 'Hello world', count: 0 }).mount('#app')
   </script>
 </body>
 

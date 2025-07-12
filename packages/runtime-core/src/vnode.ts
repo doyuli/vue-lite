@@ -1,5 +1,6 @@
+import type { Component } from './component'
 import type { RendererElement, RendererNode } from './renderer'
-import { isArray, isNumber, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isNumber, isObject, isString, ShapeFlags } from '@vue/shared'
 
 /**
  * 文本节点标记
@@ -20,6 +21,17 @@ export function normalizeVNode(vnode: VNode): VNode {
   return vnode
 }
 
+/**
+ * 标准化 children
+ * @param children
+ */
+function normalizeChildren(children: any) {
+  if (isNumber(children)) {
+    return String(children)
+  }
+  return children
+}
+
 export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
 }
@@ -31,11 +43,18 @@ export function isVNode(vlaue: any) {
 export function createVNode(type: VNodeTypes, props?: any, children: any = null): VNode {
   let shapeFlag: number = 0
 
+  children = normalizeChildren(children)
   if (isString(type)) {
     /**
      * dom 元素 1
      */
     shapeFlag = ShapeFlags.ELEMENT
+  }
+  else if (isObject(type)) {
+    /**
+     * 有状态的组件
+     */
+    shapeFlag = ShapeFlags.STATEFUL_COMPONENT
   }
 
   if (isString(children)) {
@@ -70,8 +89,6 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
 
   return vnode
 }
-
-export type Component = any
 
 export type VNodeTypes
   = | string

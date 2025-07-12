@@ -16,7 +16,7 @@ export function render(vnode: any, container: Element) {
 export function createApp(rootComponent: any, rootProps: any) {
   const app = renderer.createApp(rootComponent, rootProps)
 
-  const _mount = app.mount
+  const _mount = app.mount.bind(app)
 
   /**
    * 重写 app.mount，支持 dom 选择器

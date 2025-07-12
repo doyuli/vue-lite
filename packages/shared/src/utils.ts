@@ -25,3 +25,7 @@ export function isOn(value: string): boolean {
 export function hasChanged(newValue: unknown, oldValue: unknown): boolean {
   return !Object.is(newValue, oldValue)
 }
+
+export function hasOwn(object: object, key: string) {
+  return Object.hasOwn(object, key)
+}
