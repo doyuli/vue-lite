@@ -182,7 +182,7 @@ export function createRenderer(options: RendererOptions) {
    * 全量 diff
    * @param c1
    * @param c2
-   * @param el
+   * @param container
    */
   const patchKeyedChildren = (c1: VNodeChildren, c2: VNodeChildren, container: RendererElement) => {
     // 双端 diff
@@ -235,8 +235,10 @@ export function createRenderer(options: RendererOptions) {
     if (i > e1) {
       // 表示老的少，新的多，要挂载新的，挂载范围为 i-e2
       const nextPos = e2 + 1
+      // 拿到它后面的一个元素，insertBefore 插入
       const anchor = nextPos < c2.length ? c2[nextPos].el : null
       while (i <= e2) {
+        // 挂载
         patch(null, c2[i], container, anchor)
         i++
       }
@@ -248,10 +250,66 @@ export function createRenderer(options: RendererOptions) {
         i++
       }
     }
+    else {
+      /**
+       * 乱序 diff
+       * 找到相同 key 的 vnode 进行 patch
+       *
+       * c1 => [a, (b, c, d), e]
+       * c2 => [a, (c, d, b), e]
+       * 开始时：i = 0, e1 = 4, e2 = 4
+       * 双端对比完：i = 1, e1 = 3, e2 = 3
+       */
 
-    console.log(i, e1, e2)
+      const s1 = i
+      const s2 = i
 
-    // 乱序 diff
+      /**
+       * 遍历新节点 s2-e2 乱序区间
+       * 储存新子节点的 key 和 index 的映射关系
+       * c => 1, d => 2, b => 3
+       */
+      const keyToNewIndexMap = new Map()
+      for (let j = s2; j <= e2; j++) {
+        const n2 = c2[j]
+        keyToNewIndexMap.set(n2.key, j)
+      }
+
+      /**
+       * 遍历旧节点 s1-e1 乱序区间
+       * 找到相同 key 的 vnode 进行 patch
+       * 否则进行卸载
+       */
+      for (let j = s1; j <= e1; j++) {
+        const n1 = c1[j]
+        const newIndex = keyToNewIndexMap.get(n1.key)
+        if (newIndex) {
+          patch(n1, c2[newIndex], container)
+        }
+        else {
+          unmount(n1)
+        }
+      }
+
+      /**
+       * 遍历新节点，调整顺序
+       * 倒序插入 因为插入方法底层是 el.insertBefore()
+       */
+      for (let j = e2; j >= s2; j--) {
+        // 当前 vnode
+        const n2 = c2[j]
+        // 它后面的一个元素
+        const anchor = c2[j + 1]?.el || null
+        if (n2.el) {
+          // 有 vnode.el,说明之前 patch 过，倒序插入
+          hostInsert(n2.el, container, anchor)
+        }
+        else {
+          // 没有则说明是新元素，挂载
+          patch(null, n2, container, anchor)
+        }
+      }
+    }
   }
 
   /**
