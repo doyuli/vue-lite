@@ -415,26 +415,26 @@ export function createRenderer(options: RendererOptions) {
     const instance = createComponentInstance(vnode)
     // 初始化组件状态
     setupComponent(instance)
+
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
-        // 获取 subTree，this 指向 instance.setupState
-        const subTree = instance.render.call(instance.setupState)
+        // 获取 subTree，this 指向 instance 的代理对象
+        const subTree = instance.render.call(instance.proxy)
         // 将 subTree 挂载在页面
         patch(null, subTree, container, anchor)
         // 保留上一次的 subTree，更新用
         instance.subTree = subTree
         // 标记挂载
         instance.isMounted = true
-      } 
+      }
       else {
         // 已经挂载，需要更新
         const prevSubTree = instance.subTree
-        const subTree = instance.render.call(instance.setupState)
+        const subTree = instance.render.call(instance.proxy)
         patch(prevSubTree, subTree, container, anchor)
         // 保留上一次的 subTree，下次更新用
         instance.subTree = subTree
       }
-
     }
 
     // 创建 effect

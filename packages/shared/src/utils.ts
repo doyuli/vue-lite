@@ -26,6 +26,6 @@ export function hasChanged(newValue: unknown, oldValue: unknown): boolean {
   return !Object.is(newValue, oldValue)
 }
 
-export function hasOwn(object: object, key: string) {
+export function hasOwn(object: object, key: string | symbol) {
   return Object.hasOwn(object, key)
 }

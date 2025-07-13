@@ -17,24 +17,15 @@
         msg: String
       },
       setup(props, { attrs }) {
-        console.log(attrs)
-        console.log(props)
-
         const count = ref(0)
-        return {
-          count
+        return () => {
+          return h('div', {
+            onClick: () => {
+              count.value++
+            }
+          }, count.value)
         }
       },
-      render() {
-        // return h('div', this.msg + this.count)
-        // return h('div', this.$attrs.count)
-        return h('div', {
-          // 这里得箭头函数，不然 this 指向不正确
-          onClick: () => {
-            this.count++
-          }
-        }, this.count + ' count++')
-      }
     }
 
     createApp(Comp, { msg: 'Hello world', attrCount: 0 }).mount('#app')
