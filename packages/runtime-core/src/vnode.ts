@@ -1,6 +1,6 @@
 import type { Component } from './component'
 import type { RendererElement, RendererNode } from './renderer'
-import { isArray, isNumber, isObject, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isFunction, isNumber, isObject, isString, ShapeFlags } from '@vue/shared'
 
 /**
  * 文本节点标记
@@ -15,21 +15,59 @@ export function normalizeVNode(vnode: VNode): VNode {
   if (isString(vnode) || isNumber(vnode)) {
     return createVNode(Text, null, String(vnode))
   }
-  else if (isVNode(vnode)) {
-    return vnode
-  }
+
   return vnode
 }
 
 /**
  * 标准化 children
+ * @param vnode
  * @param children
  */
-function normalizeChildren(children: any) {
-  if (isNumber(children)) {
-    return String(children)
+function normalizeChildren(vnode: VNode, children: any) {
+  let { shapeFlag } = vnode
+
+  if (isArray(children)) {
+    /**
+     * 数组形式子节点 二进制10001
+     */
+    shapeFlag |= ShapeFlags.ARRAY_CHILDREN
   }
-  return children
+  else if (isObject(children)) {
+    /**
+     * children = { header: () => h('div', 'hello world') }
+     */
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      // 前提是 vnode 是一个组件，才会有插槽
+      shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+    }
+  }
+  else if (isFunction(children)) {
+    /**
+     * 匿名插槽 统一转成对象
+     * children = () => h('div', 'hello world')
+     */
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      // 前提是 vnode 是一个组件，才会有插槽
+      shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+      children = { default: children }
+    }
+  }
+  else if (isString(children) || isNumber(children)) {
+    /**
+     * 纯文本子元素 二进制1001
+     * 等价于 shapeFlag = shapeFlag | ShapeFlags.TEXT_CHILDREN
+     * 或运算（二进制）
+     * 0001 位数不够，shapeFlag 前面补零
+     * 1000
+     */
+    children = String(children)
+    shapeFlag |= ShapeFlags.TEXT_CHILDREN
+  }
+
+  // 处理完了重新赋值
+  vnode.shapeFlag = shapeFlag
+  vnode.children = children
 }
 
 export function isSameVNodeType(n1: VNode, n2: VNode) {
@@ -43,7 +81,7 @@ export function isVNode(vlaue: any) {
 export function createVNode(type: VNodeTypes, props?: any, children: any = null): VNode {
   let shapeFlag: number = 0
 
-  children = normalizeChildren(children)
+  // 处理 vnode type 的 shapeFlag
   if (isString(type)) {
     /**
      * dom 元素 1
@@ -57,28 +95,11 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
     shapeFlag = ShapeFlags.STATEFUL_COMPONENT
   }
 
-  if (isString(children)) {
-    /**
-     * 纯文本子元素 二进制1001
-     * 等价于 shapeFlag = shapeFlag | ShapeFlags.TEXT_CHILDREN
-     * 或运算（二进制）
-     * 0001 位数不够，shapeFlag 前面补零
-     * 1000
-     */
-    shapeFlag |= ShapeFlags.TEXT_CHILDREN
-  }
-  else if (isArray(children)) {
-    /**
-     * 数组形式子节点 二进制10001
-     */
-    shapeFlag |= ShapeFlags.ARRAY_CHILDREN
-  }
-
   const vnode = {
     __v_isVNode: true,
     type,
     props,
-    children,
+    children: null,
     // 做 diff 用的
     key: props?.key,
     // 虚拟节点要挂载的元素
@@ -86,6 +107,8 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
     appContext: null,
     shapeFlag,
   } as VNode
+
+  normalizeChildren(vnode, children)
 
   return vnode
 }

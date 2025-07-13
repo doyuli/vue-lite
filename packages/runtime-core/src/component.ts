@@ -2,6 +2,7 @@ import type { VNode } from './vnode'
 import { proxyRefs } from '@vue/reactivity'
 import { hasOwn, isFunction, isObject } from '@vue/shared'
 import { initProps, normalizePropsOptions } from './componentProps'
+import { initSlots } from './componentSlots'
 import { nextTick } from './scheduler'
 
 export type Component = any
@@ -53,6 +54,8 @@ export function createComponentInstance(vnode: VNode) {
 export function setupComponent(instance: ComponentInstance) {
   // 初始化属性
   initProps(instance)
+  // 初始化插槽
+  initSlots(instance)
   // 处理组件状态
   setupStatefulComponent(instance)
 }
@@ -172,6 +175,7 @@ function createSetupContext(instance: ComponentInstance) {
     emit(event: string, ...args: any[]) {
       emit(instance, event, ...args)
     },
+    slots: instance.slots,
   }
 }
 

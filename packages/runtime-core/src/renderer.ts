@@ -6,6 +6,7 @@ import { createAppAPI } from './apiCreateApp'
 import { createComponentInstance, setupComponent } from './component'
 import { updateProps } from './componentProps'
 import { shouldUpdateComponent } from './componentRenderUtils'
+import { updateSlots } from './componentSlots'
 import { queueJob } from './scheduler'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 
@@ -420,6 +421,8 @@ export function createRenderer(options: RendererOptions) {
     instance.next = null
     // 更新 props
     updateProps(instance, nextVNode)
+    // 更新 slots
+    updateSlots(instance, nextVNode)
   }
 
   /**

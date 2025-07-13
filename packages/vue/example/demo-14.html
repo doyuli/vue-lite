@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>组件的插槽</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { ref, h, createApp, nextTick } from '../dist/vue.esm.js';
+
+    const Child = {
+      setup(props, { emit, slots }) {
+        return () => {
+          return h('div', null, [
+            slots.header?.(),
+            slots.default(),
+            slots.footer?.({ msg: ' hello footer' })
+          ])
+        }
+      }
+    }
+
+    const Comp = {
+      setup(props, { attrs }) {
+        return () => {
+          return h('div', [
+            h('p', '我是父组件'),
+            h(Child, null, {
+              header: () => h('p', '父组件传递的插槽 header'),
+              default: () => h('p', '默认插槽'),
+              footer: ({ msg }) => h('p', '父组件传递的插槽 footer' + msg)
+            }),
+          ])
+        }
+      },
+    }
+
+    createApp(Comp).mount('#app')
+  </script>
+</body>
+
+</html>
