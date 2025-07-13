@@ -34,9 +34,15 @@ export function createComponentInstance(vnode: VNode) {
     isMounted: false,
     update: null,
     next: null,
+    emit: null,
   }
 
   instance.ctx = { _: instance }
+
+  // 事件处理函数
+  // instance.emit = (event: string, ...args: any[]) => emit(instance, event, ...args)
+  instance.emit = emit.bind(null, instance) // 和上面注释一样的效果
+
   return instance
 }
 
@@ -56,6 +62,7 @@ const publicPropertiesMap = {
   $attrs: (instance: ComponentInstance) => instance.attrs,
   $slots: (instance: ComponentInstance) => instance.slots,
   $refs: (instance: ComponentInstance) => instance.refs,
+  $emit: (instance: ComponentInstance) => instance.emit,
   $nextTick: (instance: ComponentInstance) => nextTick.bind(instance),
   $forceUpdate: (instance: ComponentInstance) => {
     return () => instance.update()
@@ -162,5 +169,25 @@ function createSetupContext(instance: ComponentInstance) {
     get attrs() {
       return instance.attrs
     },
+    emit(event: string, ...args: any[]) {
+      emit(instance, event, ...args)
+    },
+  }
+}
+
+/**
+ * 事件处理函数
+ * instance 上也要用，抽出来
+ * @param instance
+ * @param event
+ * @param args
+ */
+function emit(instance: ComponentInstance, event: string, ...args: any[]) {
+  // foo => onFoo
+  const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
+  // 事件处理函数
+  const handler = instance.vnode.props[eventName]
+  if (isFunction(handler)) {
+    handler?.(...args)
   }
 }

@@ -9,30 +9,47 @@
 
 <body>
   <div id="app"></div>
-  <button id="btn">aget++</button>
   <script type="module">
     import { ref, h, createApp, nextTick } from '../dist/vue.esm.js';
 
-    const Child = {
-      props: {
-        age: Number
-      },
-      setup(props) {
+    const Child1 = {
+      setup(props, { emit }) {
         return () => {
-          return h('div', ['我是子组件，', '我的年龄是：', props.age])
+          return h('button', {
+            onClick() {
+              emit('foo', 1, 2, 3)
+            }
+          }, '我是子组件1')
         }
       }
     }
 
-    const Comp = {
-      setup(props, { attrs }) {
-        const age = ref(0)
-        btn.onclick = () => {
-          age.value++
-        }
+    const Child2 = {
+      render() {
+        const onClick = () => this.emit('foo', '我是 this 触发的')
+        return h('button', {
+          onClick
+        }, '我是子组件2')
+      }
+    }
 
+    const Comp = {
+      // <Child @foo="() => {}"></Child>
+      setup(props, { attrs }) {
         return () => {
-          return h(Child, { age: age.value })
+          return h('div', [
+            h('p', '我是父组件'),
+            h(Child1, {
+              onFoo(...args) {
+                console.log('父组件传递的事件' + args);
+              }
+            }),
+            h(Child2, {
+              onFoo(...args) {
+                console.log('父组件传递的事件' + args);
+              }
+            })
+          ])
         }
       },
     }
