@@ -1,8 +1,10 @@
+import type { ComponentInstance } from './component'
 import type { VNode } from './vnode'
 import { ReactiveEffect } from '@vue/reactivity'
 import { ShapeFlags } from '@vue/shared'
 import { createAppAPI } from './apiCreateApp'
 import { createComponentInstance, setupComponent } from './component'
+import { queueJob } from './scheduler'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 
 /**
@@ -405,17 +407,12 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
-   * 组件的挂载
-   * @param vnode
+   * render effect
+   * @param instance
    * @param container
    * @param anchor
    */
-  const mountComponent = (vnode: VNode, container: RendererElement, anchor: RendererElement = null) => {
-    // 创建组件实例
-    const instance = createComponentInstance(vnode)
-    // 初始化组件状态
-    setupComponent(instance)
-
+  const setupRenderEffect = (instance: ComponentInstance, container: RendererElement, anchor: RendererElement = null) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 获取 subTree，this 指向 instance 的代理对象
@@ -439,7 +436,36 @@ export function createRenderer(options: RendererOptions) {
 
     // 创建 effect
     const effect = new ReactiveEffect(componentUpdateFn)
-    effect.run()
+    const update = effect.run.bind(effect)
+
+    // 保存 effect.run 到实例上, $forceUpdate 实现
+    instance.update = update
+    // 重写 scheduler
+    effect.scheduler = () => {
+      /**
+       * 重写 effect 的 scheduler
+       * 异步更新
+       */
+      queueJob(update)
+    }
+
+    // 首次渲染，收集依赖
+    update()
+  }
+
+  /**
+   * 组件的挂载
+   * @param vnode
+   * @param container
+   * @param anchor
+   */
+  const mountComponent = (vnode: VNode, container: RendererElement, anchor: RendererElement = null) => {
+    // 创建组件实例
+    const instance = createComponentInstance(vnode)
+    // 初始化组件状态
+    setupComponent(instance)
+    // effect
+    setupRenderEffect(instance, container, anchor)
   }
 
   /**

@@ -2,6 +2,7 @@ import type { VNode } from './vnode'
 import { proxyRefs } from '@vue/reactivity'
 import { hasOwn, isFunction, isObject } from '@vue/shared'
 import { initProps, normalizePropsOptions } from './componentProps'
+import { nextTick } from './scheduler'
 
 export type Component = any
 
@@ -31,6 +32,7 @@ export function createComponentInstance(vnode: VNode) {
     subTree: null,
     // 是否已经挂载
     isMounted: false,
+    update: null,
   }
 
   instance.ctx = { _: instance }
@@ -52,10 +54,9 @@ const publicPropertiesMap = {
   $attrs: (instance: ComponentInstance) => instance.attrs,
   $slots: (instance: ComponentInstance) => instance.slots,
   $refs: (instance: ComponentInstance) => instance.refs,
-  $nextTick: (instance: ComponentInstance) => {
-    // nextTick
-    console.log(instance)
-    return null
+  $nextTick: (instance: ComponentInstance) => nextTick.bind(instance),
+  $forceUpdate: (instance: ComponentInstance) => {
+    return () => instance.update()
   },
 }
 

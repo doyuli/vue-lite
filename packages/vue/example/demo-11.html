@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <button id="btn">count++</button>
+  <script type="module">
+    import { ref, h, createApp, nextTick } from '../dist/vue.esm.js';
+
+    const Comp = {
+      props: {
+        msg: String
+      },
+      setup(props, { attrs }) {
+        const count = ref(0)
+        btn.onclick = () => {
+          count.value++
+          count.value++
+          count.value++
+
+          const container = document.querySelector('#container')
+          // Promise.resolve().then(() => {
+          //   console.log(container.textContent);
+          // })
+          nextTick(() => {
+            console.log(container.textContent);
+          })
+        }
+
+        return function () {
+          console.count('render');
+          // this.$nextTick(() => {
+          //   const container = document.querySelector('#container')
+          //   console.log(container.textContent);
+          // })
+          return h('div', { id: 'container' }, count.value)
+        }
+      },
+    }
+
+    createApp(Comp, { msg: 'Hello world', attrCount: 0 }).mount('#app')
+  </script>
+</body>
+
+</html>
