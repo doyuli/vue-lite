@@ -33,6 +33,7 @@ export function createComponentInstance(vnode: VNode) {
     // 是否已经挂载
     isMounted: false,
     update: null,
+    next: null,
   }
 
   instance.ctx = { _: instance }
@@ -51,6 +52,7 @@ export function setupComponent(instance: ComponentInstance) {
 }
 
 const publicPropertiesMap = {
+  $el: (instance: ComponentInstance) => instance.vnode.el,
   $attrs: (instance: ComponentInstance) => instance.attrs,
   $slots: (instance: ComponentInstance) => instance.slots,
   $refs: (instance: ComponentInstance) => instance.refs,
