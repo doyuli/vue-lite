@@ -23,6 +23,12 @@ const {
   },
 })
 
+const outputFormat = format.startsWith('global')
+  ? 'iife'
+  : format === 'cjs'
+    ? 'cjs'
+    : 'esm'
+
 const target = positionals.length ? positionals[0] : 'vue'
 
 const pkgBase = `../packages/${target}`
@@ -37,7 +43,7 @@ esbuild
   .context({
     entryPoints: [entry],
     outfile,
-    format,
+    format: outputFormat,
     bundle: true,
     sourcemap: true,
     globalName: pkg.buildOptions?.name,
