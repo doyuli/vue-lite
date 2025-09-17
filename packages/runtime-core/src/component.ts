@@ -137,8 +137,15 @@ function setupStatefulComponent(instance: ComponentInstance) {
     // 创建 setup context
     const setupContext = createSetupContext(instance)
     instance.setupContext = setupContext
+
+    // 保存当前实例
+    setCurrentInstance(instance)
+
     // 调用 setup 函数
     const setupResult = type.setup(instance.props, setupContext)
+
+    // 清除当前实例
+    unsetCurrentInstance()
 
     handleSetupResult(instance, setupResult)
   }
@@ -194,4 +201,18 @@ function emit(instance: ComponentInstance, event: string, ...args: any[]) {
   if (isFunction(handler)) {
     handler?.(...args)
   }
+}
+
+let currentInstance: ComponentInstance | null = null
+
+export function setCurrentInstance(instance: ComponentInstance) {
+  currentInstance = instance
+}
+
+export function getCurrentInstance() {
+  return currentInstance
+}
+
+export function unsetCurrentInstance() {
+  currentInstance = null
 }
