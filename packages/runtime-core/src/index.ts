@@ -1,3 +1,4 @@
+export * from './apiLifecycle'
 export * from './component'
 export * from './h'
 export * from './renderer'

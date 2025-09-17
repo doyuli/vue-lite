@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>组件的生命周期</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import {
+      h,
+      ref,
+      createApp,
+      onBeforeMount,
+      onMounted,
+      onBeforeUpdate,
+      onUpdated,
+      onBeforeUnmount,
+      onUnmounted,
+      getCurrentInstance
+    } from '../dist/vue.esm.js';
+
+
+
+    const Comp = {
+      setup() {
+        const count = ref(0)
+
+        setTimeout(() => {
+          count.value++
+        }, 1000)
+
+        onBeforeMount(() => {
+          console.log('父组件 onBeforeMount');
+        })
+
+        onMounted(() => {
+          console.log(document.querySelector('#container'));
+          console.log(getCurrentInstance());
+          console.log('父组件 onMounted');
+        })
+
+        onBeforeUpdate(() => {
+          console.log('父组件 onBeforeUpdate');
+        })
+
+        onUpdated(() => {
+          console.log('父组件 onUpdated');
+        })
+
+        onBeforeUnmount(() => {
+          console.log('父组件 onBeforeUnmount');
+        })
+
+        onUnmounted(() => {
+          console.log('父组件 onUnmounted');
+        })
+        return () => {
+          return h(
+            'div',
+            { id: 'container' },
+            [
+              h('p', '我是父组件'),
+              h(Child, { count: count.value }),
+            ])
+        }
+      },
+    }
+
+    const Child = {
+      props: ['count'],
+      setup(props) {
+        onBeforeMount(() => {
+          console.log('子组件 onBeforeMount');
+        })
+
+        onMounted(() => {
+          console.log('子组件 onMounted');
+        })
+
+        onBeforeUpdate(() => {
+          console.log('子组件 onBeforeUpdate');
+        })
+
+        onUpdated(() => {
+          console.log('子组件 onUpdated');
+        })
+
+        onBeforeUnmount(() => {
+          console.log('子组件 onBeforeUnmount');
+        })
+
+        onUnmounted(() => {
+          console.log('子组件 onUnmounted');
+        })
+        return () => {
+          return h('div', [h('p', '我是子组件'), props.count])
+        }
+      },
+    }
+
+    const app = createApp(Comp)
+    app.mount('#app')
+
+    setTimeout(() => {
+      app.unmount()
+    }, 2000)
+  </script>
+</body>
+
+</html>

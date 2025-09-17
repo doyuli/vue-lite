@@ -3,6 +3,7 @@ import type { VNode } from './vnode'
 import { ReactiveEffect } from '@vue/reactivity'
 import { ShapeFlags } from '@vue/shared'
 import { createAppAPI } from './apiCreateApp'
+import { LifecycleHooks, triggerHooks } from './apiLifecycle'
 import { createComponentInstance, setupComponent } from './component'
 import { updateProps } from './componentProps'
 import { shouldUpdateComponent } from './componentRenderUtils'
@@ -24,8 +25,6 @@ export function createRenderer(options: RendererOptions) {
     createText: hostCreateText,
     setText: hostSetText,
     setElementText: hostSetElementText,
-    parentNode: hostParentNode,
-    nextSibling: hostNextSibling,
   } = options
 
   /**
@@ -46,7 +45,12 @@ export function createRenderer(options: RendererOptions) {
    */
   const unmount = (vnode: VNode) => {
     const { shapeFlag, children } = vnode
-    if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      // 卸载组件
+      unmountComponent(vnode.component)
+    }
+    else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 递归卸载子节点
       unmountChildren(children)
     }
@@ -65,6 +69,20 @@ export function createRenderer(options: RendererOptions) {
       // 递归挂载子节点
       patch(null, child, el)
     }
+  }
+  /**
+   * 卸载组件
+   * @param instance
+   */
+  const unmountComponent = (instance: ComponentInstance) => {
+    // onBeforeUnmount
+    triggerHooks(instance, LifecycleHooks.BEFORE_UNMOUNT)
+
+    // 把 subTree 卸载掉
+    unmount(instance.subTree)
+
+    // onUnmounted
+    triggerHooks(instance, LifecycleHooks.UNMOUNTED)
   }
 
   /**
@@ -435,6 +453,10 @@ export function createRenderer(options: RendererOptions) {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         const { vnode, render } = instance
+
+        // onBeforeMount
+        triggerHooks(instance, LifecycleHooks.BEFORE_MOUNT)
+
         // 获取 subTree，this 指向 instance 的代理对象
         const subTree = render.call(instance.proxy)
         // 将 subTree 挂载在页面
@@ -445,6 +467,9 @@ export function createRenderer(options: RendererOptions) {
         instance.subTree = subTree
         // 标记挂载
         instance.isMounted = true
+
+        // onMounted
+        triggerHooks(instance, LifecycleHooks.MOUNTED)
       }
       else {
         // 已经挂载，需要更新
@@ -462,6 +487,9 @@ export function createRenderer(options: RendererOptions) {
           next = vnode
         }
 
+        // onBeforeUpdate
+        triggerHooks(instance, LifecycleHooks.BEFORE_UPDATE)
+
         const prevSubTree = instance.subTree
         const subTree = render.call(instance.proxy)
         // 更新
@@ -470,6 +498,9 @@ export function createRenderer(options: RendererOptions) {
         next.el = subTree.el
         // 保留上一次的 subTree，下次更新用
         instance.subTree = subTree
+
+        // onUpdated
+        triggerHooks(instance, LifecycleHooks.UPDATED)
       }
     }
 
