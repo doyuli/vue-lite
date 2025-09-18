@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>组件的 ref 和 expose</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { h, ref, createApp, onMounted, getCurrentInstance, useTemplateRef } from '../dist/vue.esm.js';
+
+    const Comp = {
+      setup() {
+        const child = useTemplateRef('childRef')
+
+        const count = ref(0)
+        // const elRef = ref()
+        // const childRef = ref()
+
+        // const vm = getCurrentInstance()
+
+        onMounted(() => {
+          // console.log(elRef.value);
+          // childRef.value.foo()
+          // console.log(childRef.value.$el);
+          // console.log(vm.proxy.$refs.elRef);
+          // console.log(vm.proxy.$refs.childRef.cvalue);
+          console.log(child.value.$el);
+        })
+
+        // const show = ref(true)
+
+        // setTimeout(() => {
+        //   show.value = false
+        // }, 1000);
+
+        return () => {
+          return h('div',
+            [
+              h('p', { id: 'container', ref: 'elRef' }, '我是父组件'),
+              h(Child, { count: count.value, ref: 'childRef' }),
+              // show.value ? h(Child, { count: count.value, ref: 'childRef' }) : '',
+            ])
+        }
+      },
+    }
+
+    const Child = {
+      props: ['count'],
+      setup(props, { expose }) {
+
+        const cvalue = ref(0)
+
+        expose({
+          foo() {
+            console.log('子组件暴露的');
+          },
+          cvalue
+        })
+        return () => {
+          return h('div', [h('p', '我是子组件'), props.count])
+        }
+      },
+    }
+
+    const app = createApp(Comp)
+    app.mount('#app')
+  </script>
+</body>
+
+</html>
