@@ -29,3 +29,8 @@ export function hasChanged(newValue: unknown, oldValue: unknown): boolean {
 export function hasOwn(object: object, key: string | symbol) {
   return Object.hasOwn(object, key)
 }
+
+const RESERVED_PROPS = new Set(['ref', 'key'])
+export function isReservedProp(key: string): boolean {
+  return RESERVED_PROPS.has(key)
+}

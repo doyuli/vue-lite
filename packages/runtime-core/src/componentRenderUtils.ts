@@ -1,4 +1,6 @@
+import type { ComponentInstance } from './component'
 import type { VNode } from './vnode'
+import { setCurrentRenderingInstance, unsetCurrentRenderingInstance } from './component'
 
 function hasPropsChanged(prevProps: object, nextProps: object) {
   const nextKeys = Object.keys(nextProps)
@@ -39,4 +41,12 @@ export function shouldUpdateComponent(n1: VNode, n2: VNode) {
 
   // 旧的新的都有
   return hasPropsChanged(prevProps, nextProps)
+}
+
+export function renderComponentRoot(instance: ComponentInstance) {
+  setCurrentRenderingInstance(instance)
+  // this 指向 instance 的代理对象
+  const subTree = instance.render.call(instance.proxy)
+  unsetCurrentRenderingInstance()
+  return subTree
 }

@@ -1,6 +1,8 @@
+import type { RefImpl } from '@vue/reactivity'
 import type { Component } from './component'
 import type { RendererElement, RendererNode } from './renderer'
 import { isArray, isFunction, isNumber, isObject, isString, ShapeFlags } from '@vue/shared'
+import { getCurrentRenderingInstance } from './component'
 
 /**
  * 文本节点标记
@@ -70,6 +72,20 @@ function normalizeChildren(vnode: VNode, children: any) {
   vnode.children = children
 }
 
+/**
+ * 标准化 ref
+ * @param rawRef
+ */
+function normalizeRef(rawRef: RefImpl) {
+  if (!rawRef)
+    return
+
+  return {
+    r: rawRef,
+    i: getCurrentRenderingInstance(),
+  }
+}
+
 export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
 }
@@ -106,6 +122,8 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
     el: null,
     appContext: null,
     shapeFlag,
+    // 绑定 ref
+    ref: normalizeRef(props?.ref),
   } as VNode
 
   normalizeChildren(vnode, children)

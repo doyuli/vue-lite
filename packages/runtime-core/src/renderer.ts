@@ -1,13 +1,14 @@
 import type { ComponentInstance } from './component'
 import type { VNode } from './vnode'
 import { ReactiveEffect } from '@vue/reactivity'
-import { ShapeFlags } from '@vue/shared'
+import { isReservedProp, ShapeFlags } from '@vue/shared'
 import { createAppAPI } from './apiCreateApp'
 import { LifecycleHooks, triggerHooks } from './apiLifecycle'
 import { createComponentInstance, setupComponent } from './component'
 import { updateProps } from './componentProps'
-import { shouldUpdateComponent } from './componentRenderUtils'
+import { renderComponentRoot, shouldUpdateComponent } from './componentRenderUtils'
 import { updateSlots } from './componentSlots'
+import { setRef } from './renderTemplateRef'
 import { queueJob } from './scheduler'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 
@@ -44,7 +45,7 @@ export function createRenderer(options: RendererOptions) {
    * @param vnode
    */
   const unmount = (vnode: VNode) => {
-    const { shapeFlag, children } = vnode
+    const { shapeFlag, children, ref } = vnode
 
     if (shapeFlag & ShapeFlags.COMPONENT) {
       // 卸载组件
@@ -55,6 +56,10 @@ export function createRenderer(options: RendererOptions) {
       unmountChildren(children)
     }
     hostRemove(vnode.el)
+
+    if (ref != null) {
+      setRef(ref, null)
+    }
   }
 
   /**
@@ -101,7 +106,9 @@ export function createRenderer(options: RendererOptions) {
     // 设置 props
     if (props) {
       for (const key in props) {
-        hostPatchProp(el, key, null, props[key])
+        if (!isReservedProp(key)) {
+          hostPatchProp(el, key, null, props[key])
+        }
       }
     }
 
@@ -130,13 +137,17 @@ export function createRenderer(options: RendererOptions) {
     // 删掉老的
     if (oldProps) {
       for (const key in oldProps) {
-        hostPatchProp(el, key, oldProps[key], null)
+        if (!isReservedProp(key) && !(key in newProps)) {
+          hostPatchProp(el, key, oldProps[key], null)
+        }
       }
     }
 
     // 设置新的
     if (newProps) {
       for (const key in newProps) {
+        if (isReservedProp(key))
+          continue
         hostPatchProp(el, key, oldProps?.[key], newProps[key])
       }
     }
@@ -452,13 +463,14 @@ export function createRenderer(options: RendererOptions) {
   const setupRenderEffect = (instance: ComponentInstance, container: RendererElement, anchor: RendererElement = null) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
-        const { vnode, render } = instance
+        const { vnode } = instance
 
         // onBeforeMount
         triggerHooks(instance, LifecycleHooks.BEFORE_MOUNT)
 
-        // 获取 subTree，this 指向 instance 的代理对象
-        const subTree = render.call(instance.proxy)
+        // 获取 subTree
+        const subTree = renderComponentRoot(instance)
+
         // 将 subTree 挂载在页面
         patch(null, subTree, container, anchor)
         // 组件 vnode 的 el 指向 subTree 的 el
@@ -473,7 +485,7 @@ export function createRenderer(options: RendererOptions) {
       }
       else {
         // 已经挂载，需要更新
-        let { vnode, render, next } = instance
+        let { vnode, next } = instance
 
         if (next) {
           // 父组件传递的属性触发的更新
@@ -491,7 +503,9 @@ export function createRenderer(options: RendererOptions) {
         triggerHooks(instance, LifecycleHooks.BEFORE_UPDATE)
 
         const prevSubTree = instance.subTree
-        const subTree = render.call(instance.proxy)
+        // 获取 subTree
+        const subTree = renderComponentRoot(instance)
+
         // 更新
         patch(prevSubTree, subTree, container, anchor)
         // 组件 vnode 的 el 指向 subTree 的 el，复用 el
@@ -602,7 +616,7 @@ export function createRenderer(options: RendererOptions) {
       n1 = null
     }
 
-    const { shapeFlag, type } = n2
+    const { shapeFlag, type, ref } = n2
 
     switch (type) {
       case Text:
@@ -618,6 +632,10 @@ export function createRenderer(options: RendererOptions) {
           // 组件的挂载、更新
           processComponent(n1, n2, container, anchor)
         }
+    }
+
+    if (ref != null) {
+      setRef(ref, n2)
     }
   }
 
