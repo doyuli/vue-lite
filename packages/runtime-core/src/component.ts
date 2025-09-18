@@ -13,8 +13,11 @@ export type ComponentInstance = ReturnType<typeof createComponentInstance>
  * 创建组件实例
  * @param vnode
  */
-export function createComponentInstance(vnode: VNode) {
+export function createComponentInstance(vnode: VNode, parent: any) {
   const { type } = vnode
+
+  const appContext = parent ? parent.appContext : vnode.appContext
+
   const instance = {
     /**
      * 组件的类型定义（type）
@@ -28,6 +31,21 @@ export function createComponentInstance(vnode: VNode) {
      * 在 patch 过程中用于对比新旧 vnode，驱动更新
      */
     vnode,
+    /**
+     * 应用上下文（App Context）
+     * 从根组件继承而来，包含全局共享的数据和配置，例如：
+     * - 全局注册的组件（app.component()）
+     * - 全局注册的指令（app.directive()）
+     * - 全局 mixin、插件
+     * - 自定义的全局 API（通过 app.config.globalProperties）
+     * - 自定义的 provide/inject 链
+     *
+     * 每个组件实例通过 instance.appContext 访问这些全局资源
+     * 在组件解析、渲染、依赖注入等过程中被频繁使用
+     *
+     * 注意：子组件继承父组件的 appContext，通常在应用初始化时创建
+     */
+    appContext,
     /**
      * 用户定义的 render 函数
      * 可以是模板编译后的函数，也可以是用户手写的 render 函数
@@ -123,6 +141,14 @@ export function createComponentInstance(vnode: VNode) {
      * 是 ref.value 访问时实际返回的对象
      */
     exposedProxy: null,
+    /**
+     * 父组件实例
+     */
+    parent,
+    /**
+     * 子组件实例树的集合（用于父子通信、卸载等）
+     */
+    children: new Set(),
   }
 
   instance.ctx = { _: instance }
