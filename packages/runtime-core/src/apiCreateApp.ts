@@ -1,3 +1,4 @@
+import type { InjectKey } from './apiInject'
 import type { RendererElement } from './renderer'
 import type { VNode } from './vnode'
 import { h } from './h'
@@ -11,6 +12,7 @@ export function createAppAPI(render: (vnode: VNode, container: RendererElement) 
 
     const app = {
       _container: null,
+      context,
       mount(container: RendererElement) {
         // 创建组件的 vnode
         const vnode = h(rootComponent, rootProps)
@@ -23,6 +25,9 @@ export function createAppAPI(render: (vnode: VNode, container: RendererElement) 
       },
       unmount() {
         render(null, app._container)
+      },
+      provide(key: InjectKey, value: unknown) {
+        context.provides[key] = value
       },
     }
 

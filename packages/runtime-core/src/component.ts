@@ -146,9 +146,20 @@ export function createComponentInstance(vnode: VNode, parent: any) {
      */
     parent,
     /**
-     * 子组件实例树的集合（用于父子通信、卸载等）
+     * 组件的 provide 数据存储对象
+     *
+     * - 如果是根组件：继承自 appContext.provides
+     * - 如果是子组件：继承自 parent.provides（实现原型链式查找）
+     *
+     * 当前组件调用 provide(key, value) 时，会在自己的 provides 上定义新属性
+     *
+     * 实现机制：
+     *   使用 Object.create(parentProvides) 构建原型链
+     *   这样 inject 时可以通过原型链查找祖先提供的值
+     *
+     * 注意：provides 本身不是响应式的，但提供的值可以是响应式对象
      */
-    children: new Set(),
+    provides: parent ? parent.provides : appContext.provides,
   }
 
   instance.ctx = { _: instance }

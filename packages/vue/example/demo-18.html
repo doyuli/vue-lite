@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>组件的 provide 和 inject</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { h, ref, createApp, getCurrentInstance, provide, inject } from '../dist/vue.esm.js';
+
+    const App = {
+      setup() {
+        const count = ref(0)
+        provide('count', count)
+
+        setInterval(() => {
+          count.value++
+        }, 1000);
+
+        return () => {
+          return h('div',
+            [
+              h('我是父组件'),
+              h(Child),
+            ])
+        }
+      },
+    }
+
+    const Child = {
+      setup() {
+        const count = inject('count', { value: 10 })
+        const appCount = inject('appCount', 10)
+
+        console.log(getCurrentInstance());
+        return () => {
+          return h('div', [h('p', '我是子组件'), count.value, appCount.value])
+        }
+      },
+    }
+
+    const app = createApp(App)
+    const appCount = ref(3)
+    app.provide('appCount', appCount)
+    app.mount('#app')
+  </script>
+</body>
+
+</html>
