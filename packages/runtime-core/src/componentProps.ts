@@ -1,7 +1,7 @@
 import type { ComponentInstance } from './component'
 import type { VNode } from './vnode'
 import { reactive } from '@vue/reactivity'
-import { hasOwn, isArray } from '@vue/shared'
+import { hasOwn, isArray, ShapeFlags } from '@vue/shared'
 
 /**
  * 标准化 props
@@ -28,10 +28,14 @@ export function normalizePropsOptions(props: any = {}) {
  */
 function setFullProps(instance: ComponentInstance, rawProps: object, props: object, attrs: object) {
   if (rawProps) {
-    const propsOptions = instance.propsOptions
+    const { propsOptions, vnode } = instance
+    const isFunctionalComponent = vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT
+    const hasProps = Object.keys(propsOptions).length
+
     for (const key in rawProps) {
       const value = rawProps[key]
-      if (hasOwn(propsOptions, key)) {
+      // 函数式组件没有声明 props 情况下，都放到 props 里
+      if (hasOwn(propsOptions, key) || (isFunctionalComponent && !hasProps)) {
         props[key] = value
       }
       else {

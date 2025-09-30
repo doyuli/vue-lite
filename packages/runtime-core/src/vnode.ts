@@ -110,6 +110,12 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
      */
     shapeFlag = ShapeFlags.STATEFUL_COMPONENT
   }
+  else if (isFunction(type)) {
+    /**
+     * 函数式组件
+     */
+    shapeFlag = ShapeFlags.FUNCTIONAL_COMPONENT
+  }
 
   const vnode = {
     __v_isVNode: true,

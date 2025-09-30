@@ -1,5 +1,6 @@
 import type { ComponentInstance } from './component'
 import type { VNode } from './vnode'
+import { ShapeFlags } from '@vue/shared'
 import { setCurrentRenderingInstance, unsetCurrentRenderingInstance } from './component'
 
 function hasPropsChanged(prevProps: object, nextProps: object) {
@@ -44,9 +45,22 @@ export function shouldUpdateComponent(n1: VNode, n2: VNode) {
 }
 
 export function renderComponentRoot(instance: ComponentInstance) {
-  setCurrentRenderingInstance(instance)
-  // this 指向 instance 的代理对象
-  const subTree = instance.render.call(instance.proxy)
-  unsetCurrentRenderingInstance()
-  return subTree
+  const { vnode } = instance
+
+  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+    setCurrentRenderingInstance(instance)
+    // this 指向 instance 的代理对象
+    const subTree = instance.render.call(instance.proxy)
+    unsetCurrentRenderingInstance()
+    return subTree
+  }
+  // 函数式组件
+  return vnode.type(instance.props, {
+    // 函数式组件没有 expose
+    get attrs() {
+      return instance.attrs
+    },
+    slots: instance.slots,
+    emit: instance.emit,
+  })
 }
