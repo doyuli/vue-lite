@@ -1,7 +1,6 @@
 /**
  * 创建事件处理函数
  * @param value
- * @returns
  */
 function createInvoker(value: Function) {
   /**

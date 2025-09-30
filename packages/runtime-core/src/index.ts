@@ -1,6 +1,7 @@
 export * from './apiInject'
 export * from './apiLifecycle'
 export * from './component'
+export * from './components/Teleport'
 export * from './h'
 export * from './renderer'
 export * from './scheduler'

@@ -3,6 +3,7 @@ import type { Component } from './component'
 import type { RendererElement, RendererNode } from './renderer'
 import { isArray, isFunction, isNumber, isObject, isString, ShapeFlags } from '@vue/shared'
 import { getCurrentRenderingInstance } from './component'
+import { isTeleport } from './components/Teleport'
 
 /**
  * 文本节点标记
@@ -103,6 +104,12 @@ export function createVNode(type: VNodeTypes, props?: any, children: any = null)
      * dom 元素 1
      */
     shapeFlag = ShapeFlags.ELEMENT
+  }
+  else if (isTeleport(type)) {
+    /**
+     * Teleport 组件
+     */
+    shapeFlag = ShapeFlags.TELEPORT
   }
   else if (isObject(type)) {
     /**

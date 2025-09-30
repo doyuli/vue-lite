@@ -13,6 +13,19 @@ import { queueJob } from './scheduler'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 
 /**
+ *
+ * 1. 文本节点的挂载更新
+ * patch => processText
+ *
+ * 2. 元素节点的挂载/更新
+ * patch => processElement => mountElement/patchElement
+ *
+ * 3. 组件的挂载/更新
+ * patch => processComponent => mountComponent/updateComponent
+ *
+ */
+
+/**
  * 创建渲染器
  * @param options
  */
@@ -30,19 +43,7 @@ export function createRenderer(options: RendererOptions) {
   } = options
 
   /**
-   * 卸载子节点
-   * @param children
-   */
-  const unmountChildren = (children: VNode['children']) => {
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-      // 递归卸载子节点
-      unmount(child)
-    }
-  }
-
-  /**
-   * 卸载
+   * 卸载节点
    * @param vnode
    */
   const unmount = (vnode: VNode) => {
@@ -52,10 +53,16 @@ export function createRenderer(options: RendererOptions) {
       // 卸载组件
       unmountComponent(vnode.component)
     }
+    else if (shapeFlag & ShapeFlags.TELEPORT) {
+      unmountChildren(children)
+      // Teleport 节点上没有 el
+      return
+    }
     else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 递归卸载子节点
       unmountChildren(children)
     }
+
     hostRemove(vnode.el)
 
     if (ref != null) {
@@ -63,19 +70,6 @@ export function createRenderer(options: RendererOptions) {
     }
   }
 
-  /**
-   * 挂载子节点
-   * @param children
-   * @param el
-   */
-  const mountChildren = (children: VNodeChildren, el: RendererElement, parentComponent: ComponentInstance = null) => {
-    for (let i = 0; i < children.length; i++) {
-      // 标准化 vnode
-      const child = children[i] = normalizeVNode(children[i])
-      // 递归挂载子节点
-      patch(null, child, el, null, parentComponent)
-    }
-  }
   /**
    * 卸载组件
    * @param instance
@@ -92,46 +86,33 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
-   * 挂载
-   * @param vnode
-   * @param container
+   * 卸载子节点
+   * @param children
    */
-  const mountElement = (vnode: VNode, container: RendererElement, anchor: RendererElement = null, parentComponent: ComponentInstance = null) => {
-    const { type, props, children, shapeFlag } = vnode
-
-    // 创建 dom 元素
-    const el = hostCreateElement(type)
-    // 更新、卸载时需要用到
-    vnode.el = el
-
-    // 设置 props
-    if (props) {
-      for (const key in props) {
-        if (!isReservedProp(key)) {
-          hostPatchProp(el, key, null, props[key])
-        }
-      }
+  const unmountChildren = (children: VNode['children']) => {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      // 递归卸载子节点
+      unmount(child)
     }
-
-    /**
-     * 挂载子节点
-     * 与运算（二进制）
-     */
-    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      // 文本子节点
-      hostSetElementText(el, children)
-    }
-    else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      // 数组子节点
-      mountChildren(children, el, parentComponent)
-    }
-
-    // 把 el 挂载到 container 中
-    hostInsert(el, container, anchor)
   }
 
   /**
-   * 更新 props
+   * 挂载子节点
+   * @param children
+   * @param el
+   */
+  const mountChildren = (children: VNodeChildren, el: RendererElement, parentComponent: ComponentInstance = null) => {
+    for (let i = 0; i < children.length; i++) {
+      // 标准化 vnode
+      const child = children[i] = normalizeVNode(children[i])
+      // 递归挂载子节点
+      patch(null, child, el, null, parentComponent)
+    }
+  }
+
+  /**
+   * 更新 HTML 元素的 props
    * @param el
    */
   const patchProps = (el: RendererElement, oldProps: any, newProps: any) => {
@@ -155,14 +136,13 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
-   * 更新子节点
+   * 处理子节点列表的更新
    * @param n1
    * @param n2
    */
-  const patchChildren = (n1: VNode, n2: VNode, parentComponent: ComponentInstance = null) => {
+  const patchChildren = (n1: VNode, n2: VNode, el: RendererElement, parentComponent: ComponentInstance = null) => {
     const prevShapeFlag = n1.shapeFlag
     const nextShapeFlag = n2.shapeFlag
-    const el = n2.el
     /**
      * 这里分为几种情况
      * 1. 新的是文本
@@ -384,7 +364,46 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
-   * 更新节点
+   * 挂载一个新的 HTML 元素节点到 DOM 树
+   * @param vnode
+   * @param container
+   */
+  const mountElement = (vnode: VNode, container: RendererElement, anchor: RendererElement = null, parentComponent: ComponentInstance = null) => {
+    const { type, props, children, shapeFlag } = vnode
+
+    // 创建 dom 元素
+    const el = hostCreateElement(type)
+    // 更新、卸载时需要用到
+    vnode.el = el
+
+    // 设置 props
+    if (props) {
+      for (const key in props) {
+        if (!isReservedProp(key)) {
+          hostPatchProp(el, key, null, props[key])
+        }
+      }
+    }
+
+    /**
+     * 挂载子节点
+     * 与运算（二进制）
+     */
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // 文本子节点
+      hostSetElementText(el, children)
+    }
+    else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      // 数组子节点
+      mountChildren(children, el, parentComponent)
+    }
+
+    // 把 el 挂载到 container 中
+    hostInsert(el, container, anchor)
+  }
+
+  /**
+   * 更新一个已存在的 HTML 元素节点
    * @param n1
    * @param n2
    */
@@ -394,11 +413,11 @@ export function createRenderer(options: RendererOptions) {
     // 更新 props
     patchProps(el, n1.props, n2.props)
     // 更新 children
-    patchChildren(n1, n2, parentComponent)
+    patchChildren(n1, n2, el, parentComponent)
   }
 
   /**
-   * dom 的挂载、更新
+   * 处理普通 HTML 元素节点的挂载、更新
    * @param n1
    * @param n2
    * @param container
@@ -416,7 +435,7 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
-   * 文本的挂载、更新
+   * 处理文本节点的挂载、更新
    * @param n1
    * @param n2
    * @param container
@@ -440,6 +459,24 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
+   * 处理组件节点的挂载、更新
+   * @param n1
+   * @param n2
+   * @param container
+   * @param anchor
+   */
+  const processComponent = (n1: VNode, n2: VNode, container: RendererElement, anchor: RendererElement = null, parentComponent: ComponentInstance = null) => {
+    if (n1 == null) {
+      // 挂载
+      mountComponent(n2, container, anchor, parentComponent)
+    }
+    else {
+      // 更新，父组件传递的 props 发生变化会走这边
+      updateComponent(n1, n2)
+    }
+  }
+
+  /**
    * 父组件传递的属性触发更新
    * 需要更新组件实例
    * @param instance
@@ -457,6 +494,7 @@ export function createRenderer(options: RendererOptions) {
 
   /**
    * render effect
+   * 组件响应式更新处理
    * @param instance
    * @param container
    * @param anchor
@@ -578,25 +616,9 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
-   * 组件的挂载、更新
-   * @param n1
-   * @param n2
-   * @param container
-   * @param anchor
-   */
-  const processComponent = (n1: VNode, n2: VNode, container: RendererElement, anchor: RendererElement = null, parentComponent: ComponentInstance = null) => {
-    if (n1 == null) {
-      // 挂载
-      mountComponent(n2, container, anchor, parentComponent)
-    }
-    else {
-      // 更新，父组件传递的 props 发生变化会走这边
-      updateComponent(n1, n2)
-    }
-  }
-
-  /**
    * 挂载和更新函数
+   * 整个渲染流程的入口点
+   * 它负责决定如何处理新旧 VNode 之间的差异，并分发到具体的处理函数
    * @param n1 老节点
    * @param n2 新节点
    * @param container 容器
@@ -634,6 +656,14 @@ export function createRenderer(options: RendererOptions) {
         else if (shapeFlag & ShapeFlags.COMPONENT) {
           // 组件的挂载、更新
           processComponent(n1, n2, container, anchor, parentComponent)
+        }
+        else if (shapeFlag & ShapeFlags.TELEPORT) {
+          // Teleport 组件
+          type.process(n1, n2, container, anchor, parentComponent, {
+            mountChildren,
+            patchChildren,
+            options,
+          })
         }
     }
 
