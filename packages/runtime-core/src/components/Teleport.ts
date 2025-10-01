@@ -2,7 +2,7 @@ import type { ComponentInstance } from '../component'
 import type { RendererElement } from '../renderer'
 import type { VNode } from '../vnode'
 
-export const isTeleport = (type: any) => type.__isTeleport
+export const isTeleport = (type: any) => type?.__isTeleport
 
 export const Teleport = {
   name: 'Teleport',

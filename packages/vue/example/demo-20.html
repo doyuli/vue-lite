@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeepAlive</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="to-container"></div>
+  <script type="module">
+    import { h, ref, createApp, KeepAlive, onMounted, onUnmounted } from '../dist/vue.esm.js';
+
+    const App = {
+      name: 'App',
+      setup() {
+        const components = [CompA, CompB, CompC]
+
+        const currentIndex = ref(0)
+        function onClick() {
+          // currentIndex.value = +!currentIndex.value
+          currentIndex.value < 2 ? currentIndex.value++ : currentIndex.value = 0
+        }
+
+        return () => {
+          return h('div', [
+            h('button', { onClick }, 'toggle'),
+            h(KeepAlive, { max: 2 }, () => h(components[currentIndex.value]))
+          ])
+        }
+      },
+    }
+
+    const CompA = {
+      name: 'CompA',
+      setup() {
+        onMounted(() => {
+          console.log('onMounted CompA');
+        })
+
+        onUnmounted(() => {
+          console.log('onUnmounted CompA');
+        })
+        return () => {
+          return h('div', ['CompA', h('input')])
+        }
+      },
+    }
+
+    const CompB = {
+      name: 'CompB',
+      setup() {
+        onMounted(() => {
+          console.log('onMounted CompB');
+        })
+
+        onUnmounted(() => {
+          console.log('onUnmounted CompB');
+        })
+        return () => {
+          return h('div', ['CompB', h('input')])
+        }
+      },
+    }
+
+    const CompC = {
+      name: 'CompC',
+      setup() {
+        onMounted(() => {
+          console.log('onMounted CompC');
+        })
+
+        onUnmounted(() => {
+          console.log('onUnmounted CompC');
+        })
+        return () => {
+          return h('div', ['CompC', h('input')])
+        }
+      },
+    }
+
+    const app = createApp(App)
+    app.mount('#app')
+  </script>
+</body>
+
+</html>
