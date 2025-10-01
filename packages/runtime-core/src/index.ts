@@ -1,3 +1,4 @@
+export * from './apiAsyncComponent'
 export * from './apiInject'
 export * from './apiLifecycle'
 export * from './component'
