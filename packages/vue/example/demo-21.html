@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transition</title>
+  <style>
+    .v-enter-active,
+    .v-leave-active {
+      transition: all 0.5s ease;
+    }
+
+    .v-enter-from,
+    .v-leave-to {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { h, ref, createApp, Transition } from '../dist/vue.esm.js';
+    // import { h, ref, createApp, Transition } from '../../../node_modules/vue/dist/vue.esm-browser.js';
+
+
+    const App = {
+      name: 'App',
+      setup() {
+        const show = ref(true)
+
+        function onClick() {
+          show.value = !show.value
+        }
+
+        return () => {
+          return h('div', [
+            h('button', { onClick }, 'toggle'),
+            h(Transition,
+              {
+                appear: true,
+                onBeforeEnter() {
+                  console.log('onBeforeEnter');
+                },
+                onBeforeLeave() {
+                  console.log('onBeforeLeave');
+                },
+                onEnter(el) {
+                  console.log('onEnter');
+                  // setTimeout(() => {
+                  //   done()
+                  // }, 1000);
+                },
+                onLeave(el) {
+                  console.log('onLeave');
+                  // setTimeout(() => {
+                  //   done()
+                  // }, 1000);
+                }
+              },
+              () => show.value ? h('p', 'hello world') : undefined)
+          ])
+        }
+      },
+    }
+
+    const app = createApp(App)
+    app.mount('#app')
+  </script>
+</body>
+
+</html>

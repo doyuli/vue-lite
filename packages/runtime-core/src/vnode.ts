@@ -267,4 +267,5 @@ export interface VNode<
    * @internal
    */
   vb?: any
+  transition: Record<string, (...args: any[]) => void>
 }

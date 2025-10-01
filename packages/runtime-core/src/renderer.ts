@@ -48,7 +48,7 @@ export function createRenderer(options: RendererOptions) {
    * @param vnode
    */
   const unmount = (vnode: VNode) => {
-    const { shapeFlag, children, ref } = vnode
+    const { shapeFlag, children, ref, transition } = vnode
 
     if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
       // 处理 KeepAlive 组件的卸载
@@ -71,7 +71,17 @@ export function createRenderer(options: RendererOptions) {
       unmountChildren(children)
     }
 
-    hostRemove(vnode.el)
+    const remove = () => {
+      hostRemove(vnode.el)
+    }
+
+    if (transition) {
+      // Transition 组件的销毁内部处理
+      transition.leave(vnode.el, remove)
+    }
+    else {
+      remove()
+    }
 
     if (ref != null) {
       setRef(ref, null)
@@ -377,7 +387,7 @@ export function createRenderer(options: RendererOptions) {
    * @param container
    */
   const mountElement = (vnode: VNode, container: RendererElement, anchor: RendererElement = null, parentComponent: ComponentInstance = null) => {
-    const { type, props, children, shapeFlag } = vnode
+    const { type, props, children, shapeFlag, transition } = vnode
 
     // 创建 dom 元素
     const el = hostCreateElement(type)
@@ -406,8 +416,18 @@ export function createRenderer(options: RendererOptions) {
       mountChildren(children, el, parentComponent)
     }
 
+    if (transition) {
+      // 处理 Transition 组件
+      transition.beforeEnter?.(el)
+    }
+
     // 把 el 挂载到 container 中
     hostInsert(el, container, anchor)
+
+    if (transition) {
+      // 处理 Transition 组件
+      transition.enter?.(el)
+    }
   }
 
   /**
@@ -526,7 +546,7 @@ export function createRenderer(options: RendererOptions) {
         // 将 subTree 挂载在页面
         patch(null, subTree, container, anchor, instance)
         // 组件 vnode 的 el 指向 subTree 的 el
-        vnode.el = subTree.el
+        vnode.el = subTree?.el
         // 保留上一次的 subTree，更新用
         instance.subTree = subTree
         // 标记挂载
@@ -561,7 +581,7 @@ export function createRenderer(options: RendererOptions) {
         // 更新
         patch(prevSubTree, subTree, container, anchor, instance)
         // 组件 vnode 的 el 指向 subTree 的 el，复用 el
-        next.el = subTree.el
+        next.el = subTree?.el
         // 保留上一次的 subTree，下次更新用
         instance.subTree = subTree
 
@@ -647,6 +667,11 @@ export function createRenderer(options: RendererOptions) {
    */
   const patch = (n1: VNode, n2: VNode, container: RendererElement, anchor: RendererElement = null, parentComponent: ComponentInstance = null) => {
     if (n1 === n2) {
+      return
+    }
+
+    if (n1 && n2 == null) {
+      unmount(n1)
       return
     }
 

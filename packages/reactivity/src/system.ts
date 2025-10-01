@@ -135,8 +135,9 @@ export function endTracking(sub: Subscriber) {
  * 清理依赖关系
  */
 export function clearTracking(link: Link) {
-  const { prevSub, nextSub, nextDep, dep } = link
   while (link) {
+    const { prevSub, nextSub, nextDep, dep } = link
+
     // 有上一个节点
     if (prevSub) {
       prevSub.nextSub = nextSub
