@@ -11,7 +11,7 @@ import { isKeepAlive } from './components/KeepAlive'
 import { updateSlots } from './componentSlots'
 import { setRef } from './renderTemplateRef'
 import { queueJob } from './scheduler'
-import { isSameVNodeType, normalizeVNode, Text } from './vnode'
+import { Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 
 /**
  *
@@ -48,12 +48,18 @@ export function createRenderer(options: RendererOptions) {
    * @param vnode
    */
   const unmount = (vnode: VNode) => {
-    const { shapeFlag, children, ref, transition } = vnode
+    const { shapeFlag, children, ref, transition, type } = vnode
 
     if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
       // 处理 KeepAlive 组件的卸载
       const parentComponent = vnode.component.parent
       parentComponent.ctx.deactivate(vnode)
+      return
+    }
+
+    if (type === Fragment) {
+      // 处理 Fragment 节点的卸载
+      unmountChildren(children)
       return
     }
 
@@ -72,7 +78,7 @@ export function createRenderer(options: RendererOptions) {
     }
 
     const remove = () => {
-      hostRemove(vnode.el)
+      vnode.el && hostRemove(vnode.el)
     }
 
     if (transition) {
@@ -487,6 +493,23 @@ export function createRenderer(options: RendererOptions) {
   }
 
   /**
+   * 处理 Fragment 节点的挂载、更新
+   * @param n1
+   * @param n2
+   * @param container
+   */
+  const processFragment = (n1: VNode, n2: VNode, container: RendererElement, parentComponent: ComponentInstance) => {
+    if (n1 == null) {
+      // 挂载
+      mountChildren(n2.children, container, parentComponent)
+    }
+    else {
+      // 更新
+      patchChildren(n1, n2, container, parentComponent)
+    }
+  }
+
+  /**
    * 处理组件节点的挂载、更新
    * @param n1
    * @param n2
@@ -693,6 +716,10 @@ export function createRenderer(options: RendererOptions) {
     switch (type) {
       case Text:
         processText(n1, n2, container, anchor)
+        break
+
+      case Fragment:
+        processFragment(n1, n2, container, parentComponent)
         break
 
       default:

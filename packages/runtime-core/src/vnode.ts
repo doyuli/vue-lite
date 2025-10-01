@@ -10,6 +10,8 @@ import { isTeleport } from './components/Teleport'
  */
 export const Text = Symbol('v-txt')
 
+export const Fragment = Symbol('v-fragment')
+
 /**
  * 标准化 vnode
  * @param vnode
